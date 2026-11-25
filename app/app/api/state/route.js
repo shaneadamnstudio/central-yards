@@ -29,19 +29,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Nothing to write' }, { status: 400 });
     }
 
-    const next = await patchState(patch);
+    const result = await patchState(patch);
 
-    /* read back before claiming success */
-    const check = await readState();
-    const ok = Object.keys(patch.tasks || {}).every(
-      (k) => patch.tasks[k] === null ? !(k in check.tasks) : check.tasks[k] === patch.tasks[k]
-    );
-
-    if (!ok) {
-      return NextResponse.json({ error: 'Write did not stick' }, { status: 500 });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error || 'Write did not stick' }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, updatedAt: next.updatedAt });
+    /* backend is reported so a file fallback is never mistaken for a real save */
+    return NextResponse.json({ ok: true, backend: result.backend });
   } catch (e) {
     return NextResponse.json({ error: String(e && e.message ? e.message : e) }, { status: 500 });
   }
