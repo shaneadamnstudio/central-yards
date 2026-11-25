@@ -29,8 +29,24 @@ const VIEWS = [
 export default function Calendar({ data, open, placeActivation }) {
   const { activations, series, calendar } = data;
   const now = new Date();
-  const years = [2026, 2027, 2028];
-  const [year, setYear] = useState(years.includes(now.getFullYear() + 1) ? now.getFullYear() + 1 : 2027);
+
+  /* Only offer years the calendar layer actually covers. Listing 2026 and 2028
+     when they hold no dates produced empty months and read as a broken app. */
+  const years = useMemo(() => {
+    const set = new Set();
+    (calendar?.dates || []).forEach((d) => set.add(Number(String(d.start).slice(0, 4))));
+    (activations || []).forEach((a) => set.add(Number(String(a.start_date).slice(0, 4))));
+    const list = Array.from(set).filter((y) => Number.isFinite(y)).sort();
+    return list.length ? list : [now.getFullYear()];
+  }, [calendar, activations, now]);
+
+  const firstYear = years[0];
+  const lastYear = years[years.length - 1];
+
+  const [year, setYear] = useState(() => {
+    const next = now.getFullYear() + 1;
+    return years.includes(next) ? next : (years.includes(now.getFullYear()) ? now.getFullYear() : lastYear);
+  });
   const [month, setMonth] = useState(now.getMonth());
   const [mode, setMode] = useState('month');
   const [on, setOn] = useState({ holiday: true, school: true, cny: true, custom: true, typhoon: false });
@@ -58,13 +74,26 @@ export default function Calendar({ data, open, placeActivation }) {
   const revealRef = useReveal([year, mode, month, on]);
   const today = todayISO();
 
+  const monthHasNothing = useMemo(() => {
+    const totalDays = daysInMonth(year, month);
+    const hasDate = dates.some((d) => overlapsMonth(d.start, d.end, year, month));
+    const hasAct = acts.some((a) => overlapsMonth(a.start_date, a.end_date, year, month));
+    return totalDays > 0 && !hasDate && !hasAct;
+  }, [acts, dates, year, month]);
+
   function shiftMonth(delta) {
     let m = month + delta;
     let y = year;
     if (m < 0) { m = 11; y -= 1; }
     if (m > 11) { m = 0; y += 1; }
-    if (years.includes(y)) { setYear(y); setMonth(m); }
+    /* hold at the edge of the data rather than stepping into an empty year */
+    if (!years.includes(y)) return;
+    setYear(y);
+    setMonth(m);
   }
+
+  const atFirst = year === firstYear && month === 0;
+  const atLast = year === lastYear && month === 11;
 
   function onDrop(dayKey) {
     if (!dragging) return;
@@ -102,9 +131,9 @@ export default function Calendar({ data, open, placeActivation }) {
       <div className="cal-wrap">
         <div className="cal-toolbar">
           <div className="cal-nav">
-            <button className="btn btn-sm" onClick={() => shiftMonth(-1)} aria-label="Previous month">&larr;</button>
+            <button className="btn btn-sm" onClick={() => shiftMonth(-1)} aria-label="Previous month" disabled={atFirst}>&larr;</button>
             <span className="cal-title">{MONTH_NAMES[month]} {year}</span>
-            <button className="btn btn-sm" onClick={() => shiftMonth(1)} aria-label="Next month">&rarr;</button>
+            <button className="btn btn-sm" onClick={() => shiftMonth(1)} aria-label="Next month" disabled={atLast}>&rarr;</button>
             <button
               className="btn btn-sm"
               onClick={() => {
@@ -126,9 +155,11 @@ export default function Calendar({ data, open, placeActivation }) {
 
           <span className="spacer" />
 
-          <select className="cal-select" value={year} onChange={(e) => setYear(Number(e.target.value))}>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
+          {years.length > 1 ? (
+            <select className="cal-select" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+              {years.map((y) => <option key={y} value={y}>{y}</option>)}
+            </select>
+          ) : null}
         </div>
 
         <div className="cal-layers">
@@ -142,6 +173,13 @@ export default function Calendar({ data, open, placeActivation }) {
         </div>
 
         <div ref={revealRef}>
+          {mode === 'month' && monthHasNothing ? (
+            <div className="note-strip" style={{ marginBottom: 12 }}>
+              Nothing is scheduled in {MONTH_NAMES[month]} {year}. Hong Kong has no public
+              holidays this month, and no activations are dated here yet.
+            </div>
+          ) : null}
+
           {mode === 'month' ? (
             <MonthView
               year={year}
