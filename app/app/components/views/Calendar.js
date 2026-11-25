@@ -337,11 +337,30 @@ function MonthView({ year, month, acts, dates, seriesById, open, today, dragging
               <div className="mv-daynum">{c.day}</div>
 
               <div className={'mv-dates-strip' + (info.dates.length ? '' : ' mv-strip-empty')}>
-                {info.dates.map((x) => (
-                  <span key={x.id} className={`mv-date mv-date-${x.kind}`} title={x.note || x.title}>
-                    {x.title}
-                  </span>
-                ))}
+                {info.dates.map((x) => {
+                  /* a span shows its name on the first day it covers and a bare
+                     bar after that, so a fortnight break is one thing on the
+                     calendar rather than the same words twenty times */
+                  const startKey = String(x.start).slice(0, 10);
+                  const endKey = String(x.end || x.start).slice(0, 10);
+                  const isFirst = startKey === c.key
+                    || (c.day === 1 && startKey < c.key)
+                    /* label the first day of a week too: a fortnight span that
+                       went blank after its first cell read as empty space */
+                    || (info.dates.length && weekdayMon(year, month, c.day) === 0);
+                  return (
+                    <span
+                      key={x.id}
+                      className={
+                        'mv-date mv-date-' + x.kind +
+                        (x.end && x.end !== x.start && !isFirst ? ' mv-date-cont' : '')
+                      }
+                      title={x.note || x.title}
+                    >
+                      {isFirst ? x.title : '\u00a0'}
+                    </span>
+                  );
+                })}
               </div>
 
               <div className="mv-items">
