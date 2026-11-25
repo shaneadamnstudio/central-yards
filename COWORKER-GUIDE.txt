@@ -1,0 +1,190 @@
+CENTRAL YARDS × ADAM STUDIOS — SHARED WORKSPACE
+
+What it is, how to get in, and how each part works.
+
+
+────────────────────────────────
+1. WHAT THIS IS
+────────────────────────────────
+
+A shared workspace for Central Yards and Adam Studios. It holds the 2027
+activation calendar, the project pipeline, the to-do list, partnership ideas,
+social thinking, quotes and receipts — all in one place, behind an access code.
+
+It is built on the same design as the Supply Co. research site, so it should
+feel familiar if you have used that one.
+
+Live address: https://central-yards.vercel.app
+
+It also has a calendar that works like Google Calendar, where you can see what
+is happening on each day.
+
+
+────────────────────────────────
+2. GETTING IN
+────────────────────────────────
+
+Go to: https://central-yards.vercel.app
+
+It will ask for an access code. Use whichever one applies to you:
+
+  ADAM code:          CentralYardsAdam2027
+  Central Yards code: CentralYardsHenderson2027
+
+The code you use decides what you can see.
+
+  With the ADAM code you see everything, including anything marked internal.
+
+  With the Central Yards code, internal items are hidden. A pitch, a rough
+  social idea or a draft quote marked internal simply will not appear. That is
+  deliberate, not a bug.
+
+Once you enter the code you stay signed in for 30 days on that device. If you
+need to leave, use Sign out at the top right.
+
+
+────────────────────────────────
+3. THE EIGHT TABS
+────────────────────────────────
+
+OVERVIEW
+Your starting point. It shows what is awaiting review, upcoming milestones,
+the next activation, and how many tasks are open. Anything needing somebody's
+attention shows here with who owes the next action, when it is due, and a
+direct link to the document.
+
+ACTIVATION MAP
+A real month calendar. Each event sits on the day it happens, the way Google
+Calendar works.
+
+  - Use the arrows to move between months, or Today to jump back
+  - Month / Year / By quarter switches the view
+  - In Year view, click any month name to open that month in full
+  - Click an event to see its details
+  - Drag an event onto another day to move it. The duration is kept.
+  - Public holidays, school holidays, Lunar and festival dates, and recurring
+    dates can each be switched on and off
+
+The coloured days are a key: each switch has a colour swatch matching the days
+it highlights, so pink means a public holiday.
+
+PROJECTS
+The pipeline, in two lanes: General Central Yards Projects (ongoing work) and
+Special Projects (standalone initiatives leading into 2027).
+
+Each project keeps its own label — Rapid, Standard, Big Ideas or Big Umbrella —
+and holds its links, owner, key dates and next action. Click a project to open
+its panel and see every Google Doc and working file attached to it.
+
+TO-DO
+One list, filtered by Everyone, ADAM or Central Yards. Every task shows its
+owner, due date and which project it belongs to.
+
+Tick the box on the left to mark something done. A done task is struck through
+and stays in place, so you can untick it if you did it by mistake. Use Show
+done to see everything.
+
+PARTNERSHIPS
+Potential partners and in-house ADAM concepts for Central Yards — product
+ideas, events, activations. Each idea can be linked to a project or a marketing
+moment, so when a date firms up you can see which ideas were already built for
+it.
+
+SOCIAL
+Where ADAM brain-dumps and develops content themes. Everything starts internal.
+When an idea is ready to discuss, it is marked ready and appears on the Central
+Yards side.
+
+FINANCE
+Two tabs.
+
+  Quotes — each quote links to its project and carries who is reviewing it and
+  a status: Submitted, Reviewed, Confirmed or On Hold.
+
+  Receipts — file a receipt or invoice against a project. Drop the file in or
+  choose it, add the vendor, amount, currency and date, and it is filed. You
+  can use a PDF, a photo from your phone, or a spreadsheet, up to 10 MB.
+
+  Files are private. Clicking Open gives you a link that works for five
+  minutes, so a receipt cannot be forwarded by copying a link out of the page.
+
+DECKS
+Every deck and pitch link, grouped by project. The current one is marked, so
+nobody presents last week's version. The same link also appears inside the
+project panel.
+
+
+────────────────────────────────
+4. STATUS OF THE DATA
+────────────────────────────────
+
+The workspace is live and connected to its database, but the contents are
+currently sample data — three projects, three tasks, one activation, a couple
+of quotes and decks. These are placeholders to show how everything works.
+
+Real projects and tasks will come from the ClickUp and Google Sheet tracker
+once that connection is switched on. The idea is that a task is updated once,
+in the tracker, and it shows correctly here for both teams.
+
+Please do not treat any figure or project name currently in the system as real.
+
+
+────────────────────────────────
+5. USING IT DAY TO DAY
+────────────────────────────────
+
+  Checking what you owe — open To-do and pick your team. Overdue items show
+  in red.
+
+  Seeing what is coming — Overview for the next few things, or Activation map
+  for the full month.
+
+  Filing a receipt — Finance, Receipts tab, drop the file, fill in the amount
+  and project.
+
+  Adding a link to a project — open the project and use its documents section.
+
+  Moving a marketing moment — Activation map, then drag the event onto its new
+  day.
+
+
+────────────────────────────────
+6. IF SOMETHING GOES WRONG
+────────────────────────────────
+
+  The code will not work — check you are using the right team's code. ADAM and
+  Central Yards codes are different and see different things.
+
+  A page says the workspace is unavailable — that is a setup problem on the
+  deployment, not something you can fix. Send a screenshot to Shane.
+
+  An upload is refused — only PDF, image and spreadsheet files are accepted,
+  and the limit is 10 MB.
+
+  Something saved but looks wrong on another device — tell Shane which item
+  and when. Saves are checked against the database, so a genuine mismatch is
+  worth knowing about.
+
+  You cannot see something you expect to — it may be marked internal, which
+  hides it from the Central Yards view by design.
+
+
+────────────────────────────────
+7. KEEPING THE CODES PRIVATE
+────────────────────────────────
+
+Please do not post the access codes in a shared document, a group chat, or
+anywhere outside the two teams. If a code needs to change, ask Shane and it can
+be replaced in a few minutes.
+
+The same applies to any link that opens a receipt: those expire after five
+minutes and are meant to be used immediately, not passed on.
+
+
+────────────────────────────────
+8. WHO TO ASK
+────────────────────────────────
+
+Anything about the workspace itself — Shane.
+
+For the tracker connection and the content that goes into it — Keung Gor.
