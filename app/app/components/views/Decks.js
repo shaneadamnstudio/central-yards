@@ -2,9 +2,11 @@
 
 import { useMemo } from 'react';
 import Masthead from '../Masthead';
+import useReveal from '../useReveal';
 
 export default function Decks({ data }) {
   const { decks, projects } = data;
+  const revealRef = useReveal([decks.length]);
 
   const groups = useMemo(() => {
     const map = new Map();
@@ -53,7 +55,7 @@ export default function Decks({ data }) {
               <h2>{g.name}</h2>
               <span>{g.list.length} item{g.list.length === 1 ? '' : 's'}</span>
             </div>
-            <table className="tbl">
+            <table className="tbl" ref={revealRef}>
               <thead>
                 <tr>
                   <th>Deck</th>
@@ -65,7 +67,7 @@ export default function Decks({ data }) {
               </thead>
               <tbody>
                 {g.list.map((d) => (
-                  <tr key={d.id}>
+                  <tr key={d.id} className="reveal">
                     <td>
                       <div className="t-title">
                         {d.title}

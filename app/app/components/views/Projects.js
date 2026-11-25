@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Masthead from '../Masthead';
+import useReveal from '../useReveal';
 
 const TIER = {
   rapid: { name: 'Rapid', color: 'var(--rapid)' },
@@ -13,6 +14,7 @@ const TIER = {
 export default function Projects({ data, config, open, isAdam }) {
   const { projects, project_links, tasks } = data;
   const [tier, setTier] = useState('all');
+  const revealRef = useReveal([tier]);
 
   const lanes = config?.lanes || [
     { key: 'general', name: 'General Central Yards Projects', sub: 'Ongoing work' },
@@ -74,13 +76,13 @@ export default function Projects({ data, config, open, isAdam }) {
                 <h2>{lane.name}</h2>
                 <span>{lane.sub} · {inLane.length}</span>
               </div>
-              <div className="proj-grid">
+              <div className="proj-grid" ref={revealRef}>
                 {inLane.map((p) => {
                   const links = project_links.filter((l) => l.project_id === p.id).length;
                   const openN = tasks.filter((t) => t.project_id === p.id && t.status !== 'done').length;
                   const t = TIER[p.tier];
                   return (
-                    <button key={p.id} className="proj" onClick={() => open('project', p.id)} style={{ '--accent': t?.color || 'var(--tan)' }}>
+                    <button key={p.id} className="proj reveal" onClick={() => open('project', p.id)} style={{ '--accent': t?.color || 'var(--tan)' }}>
                       <div className="proj-top">
                         <h3 className="proj-name">{p.name}</h3>
                         {p.visibility === 'internal' ? <span className="chip chip-internal">Internal</span> : null}

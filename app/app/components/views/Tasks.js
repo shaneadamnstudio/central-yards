@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Masthead from '../Masthead';
+import useReveal from '../useReveal';
 
 const TABS = [
   { key: 'everyone', name: 'Everyone' },
@@ -24,6 +25,7 @@ export default function Tasks({ data, open }) {
   const { tasks, projects } = data;
   const [who, setWho] = useState('everyone');
   const [showDone, setShowDone] = useState(false);
+  const revealRef = useReveal([who, showDone]);
 
   const projName = useMemo(() => {
     const m = {};
@@ -89,7 +91,7 @@ export default function Tasks({ data, open }) {
           </p>
         </div>
       ) : (
-        <table className="tbl">
+        <table className="tbl" ref={revealRef}>
           <thead>
             <tr>
               <th>Task</th>
@@ -105,7 +107,7 @@ export default function Tasks({ data, open }) {
               const d = daysUntil(t.due_date);
               const late = d !== null && d < 0 && t.status !== 'done';
               return (
-                <tr key={t.id}>
+                <tr key={t.id} className="reveal">
                   <td>
                     <div className="t-title">{t.title}</div>
                     {t.awaiting_from ? <div className="t-sub">Awaiting {t.awaiting_from}</div> : null}

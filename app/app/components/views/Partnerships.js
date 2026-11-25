@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Masthead from '../Masthead';
+import useReveal from '../useReveal';
 
 const KINDS = [
   { key: 'all', name: 'Everything' },
@@ -15,6 +16,7 @@ const KINDS = [
 export default function Partnerships({ data, open }) {
   const { ideas, projects, activations } = data;
   const [kind, setKind] = useState('all');
+  const revealRef = useReveal([kind]);
 
   const shown = useMemo(
     () => (kind === 'all' ? ideas : ideas.filter((i) => i.kind === kind)),
@@ -61,9 +63,9 @@ export default function Partnerships({ data, open }) {
           </p>
         </div>
       ) : (
-        <div className="idea-grid">
+        <div className="idea-grid" ref={revealRef}>
           {shown.map((i) => (
-            <button key={i.id} className="idea" onClick={() => open('idea', i.id)}>
+            <button key={i.id} className="idea reveal" onClick={() => open('idea', i.id)}>
               <h4>{i.title}</h4>
               {i.detail ? <p>{i.detail}</p> : null}
               <div className="idea-meta">

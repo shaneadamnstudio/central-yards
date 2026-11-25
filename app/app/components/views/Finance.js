@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Masthead from '../Masthead';
+import useReveal from '../useReveal';
 
 const STATUS = [
   { key: 'submitted', name: 'Submitted', color: 'var(--tan)' },
@@ -18,6 +19,7 @@ function money(n, cur) {
 export default function Finance({ data, open }) {
   const { quotes, projects } = data;
   const [status, setStatus] = useState('all');
+  const revealRef = useReveal([status]);
 
   const projName = useMemo(() => {
     const m = {};
@@ -71,7 +73,7 @@ export default function Finance({ data, open }) {
           </p>
         </div>
       ) : (
-        <table className="tbl">
+        <table className="tbl" ref={revealRef}>
           <thead>
             <tr>
               <th>Quote</th>
@@ -86,7 +88,7 @@ export default function Finance({ data, open }) {
             {shown.map((q) => {
               const st = STATUS.find((s) => s.key === q.status);
               return (
-                <tr key={q.id}>
+                <tr key={q.id} className="reveal">
                   <td>
                     <div className="t-title">{q.title}</div>
                     {q.reference ? <div className="t-sub">{q.reference}</div> : null}

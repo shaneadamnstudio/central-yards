@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Masthead from '../Masthead';
+import useReveal from '../useReveal';
 
 const STAGES = [
   { key: 'dump', name: 'Brain dump', color: 'var(--faint)' },
@@ -13,6 +14,7 @@ const STAGES = [
 export default function Social({ data, open, isAdam }) {
   const { social_ideas } = data;
   const [stage, setStage] = useState('all');
+  const revealRef = useReveal([stage]);
 
   const shown = useMemo(
     () => (stage === 'all' ? social_ideas : social_ideas.filter((s) => s.status === stage)),
@@ -44,9 +46,9 @@ export default function Social({ data, open, isAdam }) {
             </p>
           </div>
         ) : (
-          <div className="idea-grid">
+          <div className="idea-grid" ref={revealRef}>
             {shared.map((s) => (
-              <button key={s.id} className="idea" onClick={() => open('social', s.id)}>
+              <button key={s.id} className="idea reveal" onClick={() => open('social', s.id)}>
                 <h4>{s.title}</h4>
                 {s.body ? <p>{s.body}</p> : null}
                 <div className="idea-meta">
@@ -101,11 +103,11 @@ export default function Social({ data, open, isAdam }) {
           </p>
         </div>
       ) : (
-        <div className="idea-grid">
+        <div className="idea-grid" ref={revealRef}>
           {shown.map((s) => {
             const st = STAGES.find((x) => x.key === s.status);
             return (
-              <button key={s.id} className="idea" onClick={() => open('social', s.id)}>
+              <button key={s.id} className="idea reveal" onClick={() => open('social', s.id)}>
                 <h4>{s.title}</h4>
                 {s.body ? <p>{s.body}</p> : null}
                 <div className="idea-meta">

@@ -46,21 +46,21 @@ export default function Workspace({ scope }) {
   const [error, setError] = useState('');
   const [clock, setClock] = useState('');
 
-  /* dual clock, carried from the Supply Co. chrome */
+  /* clock. Central Yards is in Hong Kong, so it reads Hong Kong time only. */
   useEffect(() => {
     function tick() {
-      const f = (tz) => {
-        try {
-          return new Intl.DateTimeFormat('en-GB', {
-            hour: '2-digit', minute: '2-digit', timeZone: tz, hour12: false,
-          }).format(new Date());
-        } catch (e) { return '--:--'; }
-      };
-      setClock(`HKG ${f('Asia/Hong_Kong')}  ·  SFO ${f('America/Los_Angeles')}`);
+      try {
+        const t = new Intl.DateTimeFormat('en-GB', {
+          hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Hong_Kong', hour12: false,
+        }).format(new Date());
+        setClock(`HKG ${t}`);
+      } catch (e) {
+        setClock('');
+      }
     }
     tick();
-    const t = setInterval(tick, 30000);
-    return () => clearInterval(t);
+    const timer = setInterval(tick, 30000);
+    return () => clearInterval(timer);
   }, []);
 
   /* the wordmark path is injected into <symbol id="adam"> by public/wordmark-path.js */

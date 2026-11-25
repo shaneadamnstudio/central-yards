@@ -38,10 +38,22 @@
 
   --pad: clamp(20px, 4vw, 64px);
 
+  /* motion, ported from the Supply Co. build unchanged.
+     Two rules: springs for anything the user touches, durations for decoration.
+     GPU properties only, transform and opacity. Never height, width, top or left. */
   --ease: cubic-bezier(.25, .46, .45, .94);
   --ease-out: cubic-bezier(.22, 1, .36, 1);
-  --t-fast: .14s;
+  --ease-in-out: cubic-bezier(.4, 0, .2, 1);
+  --ease-accel: cubic-bezier(.4, 0, 1, 1);
+  --t-instant: .1s;
+  --t-fast: .15s;
   --t-normal: .25s;
+  --t-slow: .35s;
+  --t-reveal: .8s;
+  --spring-snappy: linear(0, .035, .14, .28, .44, .6, .74, .85, .93, .98, 1, 1.01, 1.01, 1);
+  --spring-gentle: linear(0, .02, .09, .2, .34, .48, .62, .74, .84, .91, .96, .99, 1, 1);
+  --spring-quick: linear(0, .05, .19, .37, .55, .71, .84, .93, .98, 1, 1.01, 1);
+  --stagger-max: 150ms;
 
   --rapid: #b91c1c;
   --standard: #1d4ed8;
@@ -232,13 +244,17 @@ a { color: inherit; }
   flex-direction: column;
   gap: 7px;
   align-content: start;
-  transition: transform .14s cubic-bezier(.2, .7, .3, 1), background .14s, box-shadow .14s;
+  transition: border-color var(--t-fast) var(--ease-out),
+              transform var(--t-fast) var(--spring-quick),
+              background var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out);
 }
 .proj:hover {
   background: #fff;
   transform: translate(-1px, -2px);
   box-shadow: 3px 4px 0 rgba(0, 0, 0, .13);
 }
+.proj:active { transform: translate(-1px, -2px) scale(.995); }
 .proj:focus-visible { outline: 2px solid var(--black); outline-offset: 2px; }
 .proj .bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: var(--accent, var(--tan)); }
 .proj-top { display: flex; align-items: flex-start; gap: 8px; }
@@ -290,11 +306,12 @@ a { color: inherit; }
   border-left: 1px solid var(--rule-strong);
   z-index: 71;
   overflow-y: auto;
-  animation: slide var(--t-normal) var(--ease-out);
+  animation: slide var(--t-slow) var(--spring-gentle);
   display: flex;
   flex-direction: column;
 }
-@keyframes slide { from { transform: translateX(16px); opacity: .4; } to { transform: none; opacity: 1; } }
+@keyframes slide { from { transform: translateX(32px); opacity: .85; } to { transform: none; opacity: 1; } }
+@keyframes sheetUp { from { transform: translateY(14px); opacity: .6; } to { transform: none; opacity: 1; } }
 
 .panel-head {
   position: sticky;
@@ -633,12 +650,37 @@ a { color: inherit; }
   text-align: left;
   font: inherit;
   color: var(--ink);
-  transition: transform .14s cubic-bezier(.2, .7, .3, 1), background .14s, box-shadow .14s;
+  transition: border-color var(--t-fast) var(--ease-out),
+              transform var(--t-fast) var(--spring-quick),
+              background var(--t-fast) var(--ease-out),
+              box-shadow var(--t-fast) var(--ease-out);
 }
 .idea:hover { background: #fff; transform: translate(-1px, -2px); box-shadow: 3px 4px 0 rgba(0, 0, 0, .13); }
+.idea:active { transform: translate(-1px, -2px) scale(.995); }
 .idea h4 { margin: 0; font-size: 12.8px; font-weight: 500; line-height: 1.25; letter-spacing: -.012em; }
 .idea p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
 .idea-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
+
+/* ---------- reveal ----------
+   Cards arrive rather than appear. Total stagger never exceeds 150ms,
+   and the whole thing is off for anyone who asks for reduced motion. */
+/* Only untransitioned while hidden, so a card's own spring hover is not
+   clobbered by the reveal. .reveal-in carries the entrance itself. */
+/* starts hidden, but the no-JS / failed-script case must never leave a card
+   invisible, so the animation fallback forces it visible after a moment */
+.reveal { opacity: 0; transform: translateY(6px); animation: revealFallback 0s linear 1.2s forwards; }
+@keyframes revealFallback { to { opacity: 1; transform: none; } }
+.reveal.reveal-in {
+  transition: opacity var(--t-slow) var(--ease-out), transform var(--t-slow) var(--ease-out);
+}
+.reveal.in { opacity: 1; transform: none; }
+.reveal-d1 { transition-delay: .08s !important; }
+.reveal-d2 { transition-delay: .16s !important; }
+.reveal-d3 { transition-delay: .24s !important; }
+
+/* once the entrance has played, drop the reveal entirely so the element
+   returns to its component transition and hover spring */
+.reveal.in.done { transition: initial; }
 
 /* ---------- misc ---------- */
 .note-strip {
@@ -671,6 +713,28 @@ a { color: inherit; }
   text-transform: uppercase;
 }
 .boot-err { color: var(--rapid); max-width: 46ch; text-align: center; line-height: 1.7; }
+
+/* a view changes the way a panel arrives, not a hard swap */
+.main > * {
+  animation: sheetUp var(--t-slow) var(--spring-gentle);
+}
+/* the drawer body scrolls like a native sheet: momentum, contained overscroll */
+.panel-body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(clamp(28px, 4vw, 40px) + env(safe-area-inset-bottom));
+}
+.drawer { overscroll-behavior: contain; }
+
+/* motion is decoration. Anyone who has asked their system for less of it gets none. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .proj, .idea, .act, .btn, .tab, .tn-head, .layer-toggle { transition: none; }
+  .proj:hover, .idea:hover { transform: none; }
+  .drawer { animation: none; }
+  .scrim { animation: none; }
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
 
 @media (max-width: 760px) {
   .main { padding: 0 18px 60px; }
