@@ -90,15 +90,16 @@ export default function Calendar({ data, open, placeActivation }) {
 
           <span className="spacer" />
 
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--faint)' }}>
-            {acts.length} activations, {dates.length} calendar entries
+          <span className="cal-count">
+            {acts.length} activation{acts.length === 1 ? '' : 's'}, {dates.length} entries
           </span>
         </div>
 
-        <div className="cal-toolbar" style={{ borderBottom: 0, paddingBottom: 4, marginBottom: 10 }}>
+        <div className="cal-layers">
           {LAYERS.map((l) => (
             <label key={l.key} className={'layer-toggle' + (on[l.key] ? ' on' : '')}>
               <input type="checkbox" checked={on[l.key]} onChange={() => toggle(l.key)} />
+              <span className={'layer-swatch sw-' + l.key} />
               {l.name}
             </label>
           ))}

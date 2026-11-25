@@ -932,7 +932,128 @@ a { color: inherit; }
   letter-spacing: .12em;
   text-transform: uppercase;
 }
-.boot-err { color: var(--rapid); max-width: 46ch; text-align: center; line-height: 1.7; }
+.boot-card {
+  max-width: 600px;
+  width: 100%;
+  text-align: left;
+  background: var(--eggshell);
+  border: 1px solid var(--black);
+  padding: 32px clamp(22px, 4vw, 40px) 34px;
+}
+.boot-mark {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--tan);
+  margin: 0 0 18px;
+}
+.boot-card h1 {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 500;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+  color: var(--black);
+}
+.boot-msg {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 22px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--rule);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.boot-help { margin-bottom: 26px; }
+.boot-step-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 10px;
+}
+.boot-lead {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0 0 20px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.boot-item {
+  display: flex;
+  gap: 13px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.boot-item:last-of-type { border-bottom: 0; }
+.boot-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 20px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  text-align: center;
+  border: 1px solid var(--black);
+  border-radius: 50%;
+  color: var(--black);
+}
+.boot-item-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  margin: 0 0 5px;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: -.01em;
+}
+.boot-item-body {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--muted);
+  margin: 0 0 3px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+/* a variable name or URL must never break mid-token: it becomes unreadable
+   and un-copyable, which is the whole point of showing it */
+.boot-help code.kv {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: rgba(0, 0, 0, .06);
+  padding: 2px 6px;
+  border-radius: 1px;
+  color: var(--ink);
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: bottom;
+}
+.boot-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--faint);
+  margin: 18px 0 0;
+  padding-top: 15px;
+  border-top: 1px solid var(--rule);
+  text-transform: none;
+  letter-spacing: 0;
+}
+/* the error screen inherits the mono uppercase from .boot; reset it so the
+   card reads as prose, and drop the red so headings are not tinted */
+.boot-err {
+  color: var(--ink);
+  letter-spacing: normal;
+  text-transform: none;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 48px 20px;
+}
 
 /* a view changes the way a panel arrives, not a hard swap */
 .main > * {
@@ -954,6 +1075,118 @@ a { color: inherit; }
   .drawer { animation: none; }
   .scrim { animation: none; }
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+/* the coloured days are a key, not decoration: each layer toggle carries the
+   same swatch it paints, so pink means public holiday without a lookup */
+.cal-layers {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+}
+.layer-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  flex: 0 0 7px;
+  display: inline-block;
+}
+.sw-holiday { background: var(--rapid); }
+.sw-school { background: var(--standard); }
+.sw-cny { background: var(--art); }
+.sw-custom { background: rgba(0, 0, 0, .3); }
+.sw-typhoon { background: var(--art); opacity: .55; }
+
+.cal-count {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+@media (max-width: 760px) {
+  .cal-count { display: none; }
+}
+
+/* ---------- the calendar on a phone ----------
+   Twelve months stacked in one column is an endless scroll that reads as a
+   single month. Two across keeps the shape of a year: the reader sees that
+   there is more, without scrolling past eleven screens to find December. */
+@media (max-width: 680px) {
+  .yeargrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .month {
+    padding: 9px 8px 11px;
+    min-height: 0;
+  }
+  .month-name { font-size: 9px; letter-spacing: .07em; }
+  .month-meta { display: none; }
+  .month-weekdays span { font-size: 6.5px; }
+  .day {
+    font-size: 7.5px;
+    min-height: 13px;
+    padding: 2px 0;
+  }
+  .day.pad { min-height: 13px; }
+  .month-items .act { padding: 5px 6px; }
+  .month-items .act-title { font-size: 9.5px; }
+  .month-items .act-date { font-size: 7px; }
+  .month-items .act-pitch { font-size: 7px; }
+
+  /* the zoomed single month gets the full width and normal type back */
+  .yeargrid.zoomed { grid-template-columns: 1fr; }
+  .yeargrid.zoomed .month-big .day { font-size: 11px; min-height: 28px; padding: 6px 0; }
+  .yeargrid.zoomed .month-big .month-weekdays span { font-size: 8px; }
+  .yeargrid.zoomed .month-big .month-name { font-size: 11px; }
+}
+
+/* at the narrowest width two columns stops being legible, so go to one and
+   make the month big enough to actually read */
+@media (max-width: 400px) {
+  .yeargrid { grid-template-columns: 1fr; }
+  .day { font-size: 10px; min-height: 26px; padding: 6px 0; }
+  .day.pad { min-height: 26px; }
+  .month-weekdays span { font-size: 8px; }
+  .month-name { font-size: 11px; }
+  .month-items .act-title { font-size: 11px; }
+}
+
+/* ---------- phone masthead: the calendar must be the first thing seen ---------- */
+@media (max-width: 760px) {
+  .masthead {
+    padding-top: 10px;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+  .masthead .lede { display: none; }
+  .masthead .eyebrow { display: none; }
+  .masthead h1 {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  .lede {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .masthead .wordmark {
+    width: 92px;
+    margin-bottom: 12px;
+  }
+  .eyebrow { margin-bottom: 8px; }
+  /* the big count is a desktop flourish, not information worth a screen */
+  .count { display: none; }
+  .cal-toolbar {
+    gap: 6px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+  .cal-toolbar .spacer { display: none; }
+  .layer-toggle { font-size: 8px; padding: 4px 7px; }
 }
 
 @media (max-width: 760px) {

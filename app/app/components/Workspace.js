@@ -191,7 +191,88 @@ export default function Workspace({ scope }) {
   }, []);
 
   if (phase === 'loading') return <div className="boot">Loading workspace</div>;
-  if (phase === 'error') return <div className="boot boot-err">{error}</div>;
+  if (phase === 'error') {
+    const notConfigured = /not configured/i.test(error);
+    return (
+      <div className="boot boot-err">
+        <div className="boot-card">
+          <p className="boot-mark">Central Yards</p>
+          <h1>Workspace unavailable</h1>
+          <p className="boot-msg">{error}</p>
+
+          {notConfigured ? (
+            <div className="boot-help">
+              <p className="boot-step-title">What to do</p>
+              <p className="boot-lead">
+                This site is live but not yet connected to its database. Whoever set up the
+                Vercel project needs to add three things, then redeploy. Takes about five minutes.
+              </p>
+
+              <div className="boot-item">
+                <span className="boot-num">1</span>
+                <div>
+                  <p className="boot-item-title">Open the project in Vercel</p>
+                  <p className="boot-item-body">Settings &rarr; Environment Variables.</p>
+                </div>
+              </div>
+
+              <div className="boot-item">
+                <span className="boot-num">2</span>
+                <div>
+                  <p className="boot-item-title">Add the database address</p>
+                  <p className="boot-item-body">Name <code className="kv">NEXT_PUBLIC_SUPABASE_URL</code></p>
+                  <p className="boot-item-body">Value <code className="kv">https://khwbtduvdfrlozsupvls.supabase.co</code></p>
+                </div>
+              </div>
+
+              <div className="boot-item">
+                <span className="boot-num">3</span>
+                <div>
+                  <p className="boot-item-title">Add the database key</p>
+                  <p className="boot-item-body">Name <code className="kv">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code></p>
+                  <p className="boot-item-body">
+                    Value is the publishable key from the Supabase project (Settings &rarr; API).
+                  </p>
+                </div>
+              </div>
+
+              <div className="boot-item">
+                <span className="boot-num">4</span>
+                <div>
+                  <p className="boot-item-title">Add the access codes</p>
+                  <p className="boot-item-body">
+                    <code className="kv">GATE_SECRET</code>, any long random string;
+                    <code className="kv">GATE_DAYS</code>, set to <code className="kv">30</code>;
+                    and <code className="kv">GATE_CODES</code>, the two team codes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="boot-item">
+                <span className="boot-num">5</span>
+                <div>
+                  <p className="boot-item-title">Redeploy</p>
+                  <p className="boot-item-body">
+                    Deployments &rarr; the latest one &rarr; Redeploy. Environment variables
+                    only take effect on a new build, so the existing deploy will keep failing
+                    until this is done.
+                  </p>
+                </div>
+              </div>
+
+              <p className="boot-note">
+                There is deliberately no sample data behind this screen. A fallback that looks
+                like live content is worse than an error, because every edit appears to save and
+                none of them persist.
+              </p>
+            </div>
+          ) : null}
+
+          <button className="btn" onClick={() => window.location.reload()}>Try again</button>
+        </div>
+      </div>
+    );
+  }
 
   const ctx = { data: visible, full: data, isAdam, counts, open, config: data.config, placeActivation, setTaskStatus, saveError, setSaveError };
 
