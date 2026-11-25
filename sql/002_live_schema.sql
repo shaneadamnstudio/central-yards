@@ -204,8 +204,7 @@ do $$
 declare t text;
 begin
   foreach t in array array[
-    'projects','project_links','tasks','activations','activation_support',
-    'series','calendar_dates','ideas','social_ideas'
+    'projects','project_links','tasks','activations','ideas','social_ideas'
   ] loop
     execute format($f$create policy %I on public.%I for select to anon using (visibility = 'shared')$f$, t||'_select', t);
   end loop;

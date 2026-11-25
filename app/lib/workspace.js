@@ -15,7 +15,13 @@ const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 let sb;
 function db() {
   if (!URL || !KEY) return null;
-  if (!sb) sb = createClient(URL, KEY, { auth: { persistSession: false } });
+  if (!sb) sb = createClient(URL, KEY, {
+    auth: { persistSession: false },
+    global: {
+      /* every read must hit the database, never a cached response */
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    },
+  });
   return sb;
 }
 
