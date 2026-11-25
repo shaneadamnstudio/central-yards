@@ -390,6 +390,97 @@ a { color: inherit; }
   flex: 0 0 56px;
 }
 
+/* ---------- year calendar ----------
+   Twelve months, Monday first. The calendar is the primary read of the
+   activation map; the quarter columns are the secondary one. */
+.yeargrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule-strong);
+  border-left: 1px solid var(--rule);
+}
+@media (max-width: 1000px) { .yeargrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 680px) { .yeargrid { grid-template-columns: 1fr; } }
+
+.month {
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 12px 12px 14px;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.month-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.month-name {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.month-meta {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.month-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.month-weekdays span {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  text-align: center;
+  padding-bottom: 2px;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.day {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  line-height: 1;
+  padding: 3px 0 2px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 1px;
+  min-height: 16px;
+}
+.day.pad { min-height: 16px; }
+.day.marked { background: rgba(0, 0, 0, .05); color: var(--ink); }
+.day.h-holiday { background: rgba(185, 28, 28, .1); color: var(--rapid); }
+.day.h-school { background: rgba(29, 78, 216, .09); color: var(--standard); }
+.day.h-cny { background: rgba(111, 74, 19, .11); color: var(--art); }
+.day.today { border-color: var(--black); font-weight: 500; }
+
+.month-items { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+.month-items .act { padding: 6px 8px; font-size: 11px; }
+.month-items .act-title { font-size: 11px; }
+.month-items .act-date { font-size: 8px; }
+
+@media (max-width: 680px) {
+  .month { min-height: 0; }
+  .day { font-size: 9px; }
+}
+
 /* ---------- tables ---------- */
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th {
