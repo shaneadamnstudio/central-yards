@@ -1,0 +1,262 @@
+{
+ "meta": {
+  "note": "Starter data. Projects and tasks arrive from the ClickUp / Google Sheet sync. Until then the views state they are empty rather than showing invented projects.",
+  "client": "Central Yards",
+  "studio": "Adam Studios",
+  "WARNING": "SAMPLE DATA seeded for testing on 25 Nov 2026. Replace with real projects/tasks from the tracker, or empty these lists and connect the database."
+ },
+ "projects": [
+  {
+   "id": "proj-1",
+   "name": "Opening season identity",
+   "summary": "Naming, mark and tone for phase one.",
+   "status": "active",
+   "lane": "special",
+   "tier": "big_umbrella",
+   "owner_name": "Shane",
+   "owner_side": "adam",
+   "key_dates": [
+    {
+     "label": "Concept lock",
+     "date": "2027-03-01"
+    }
+   ],
+   "next_action": "Send concept board",
+   "next_action_due": "2026-12-04",
+   "visibility": "shared"
+  },
+  {
+   "id": "proj-2",
+   "name": "Central Stories series",
+   "summary": "Fortnightly editorial on makers behind the mall.",
+   "status": "active",
+   "lane": "general",
+   "tier": "standard",
+   "owner_name": "Keung Gor",
+   "owner_side": "adam",
+   "key_dates": [],
+   "next_action": "Draft ep1 outline",
+   "next_action_due": "2026-12-01",
+   "visibility": "shared"
+  },
+  {
+   "id": "proj-3",
+   "name": "Internal pitch: maison retail",
+   "summary": "ADAM-only pitch not ready to show.",
+   "status": "active",
+   "lane": "special",
+   "tier": "big_ideas",
+   "owner_name": "Shane",
+   "owner_side": "adam",
+   "key_dates": [],
+   "next_action": "Decide whether to pitch",
+   "next_action_due": "2026-12-10",
+   "visibility": "internal"
+  }
+ ],
+ "tasks": [
+  {
+   "id": "t-1",
+   "project_id": "proj-1",
+   "title": "Conversations feedback",
+   "detail": "",
+   "owner_name": "Keung Gor",
+   "owner_side": "adam",
+   "due_date": "2026-11-30",
+   "status": "open",
+   "awaiting_from": "Central Yards marketing",
+   "link_url": "https://docs.google.com/document/d/example-feedback",
+   "visibility": "shared"
+  },
+  {
+   "id": "t-2",
+   "project_id": "proj-2",
+   "title": "Approve shoot dates",
+   "detail": "",
+   "owner_name": "CY Marketing",
+   "owner_side": "central_yards",
+   "due_date": "2026-12-02",
+   "status": "open",
+   "awaiting_from": "",
+   "link_url": "",
+   "visibility": "shared"
+  },
+  {
+   "id": "t-3",
+   "project_id": "proj-3",
+   "title": "Internal: scope maison idea",
+   "detail": "",
+   "owner_name": "Shane",
+   "owner_side": "adam",
+   "due_date": "2026-12-05",
+   "status": "open",
+   "awaiting_from": "",
+   "link_url": "",
+   "visibility": "internal"
+  }
+ ],
+ "project_links": [
+  {
+   "id": "l-1",
+   "project_id": "proj-1",
+   "kind": "doc",
+   "label": "Opening season brief",
+   "url": "https://docs.google.com/document/d/example-brief",
+   "visibility": "shared",
+   "added_by": "Shane"
+  },
+  {
+   "id": "l-2",
+   "project_id": "proj-3",
+   "kind": "deck",
+   "label": "Internal maison deck",
+   "url": "https://docs.google.com/presentation/d/example-internal",
+   "visibility": "internal",
+   "added_by": "Shane"
+  }
+ ],
+ "activations": [
+  {
+   "id": "act-op-2027",
+   "title": "Central Yards phase one opening",
+   "detail": "Henderson Land phase one, around 100 first-to-market brands, five duplex maisons. Target month October 2027.",
+   "start_date": "2027-10-01",
+   "end_date": "2027-10-31",
+   "audience": "joint",
+   "series_id": null,
+   "pitch_room": true,
+   "pitch_note": "Opening moment is the biggest single pitch surface in the year. ADAM work here sets the template for everything after.",
+   "visibility": "shared"
+  }
+ ],
+ "activation_support": [
+  {
+   "activation_id": "act-op-2027",
+   "project_id": "proj-1",
+   "note": "Identity anchors the opening"
+  }
+ ],
+ "series": [
+  {
+   "id": "ser-stories",
+   "name": "Central Stories",
+   "cadence": "Fortnightly",
+   "rrule": "",
+   "colour": "#a08967",
+   "parent_activation_id": null,
+   "visibility": "shared"
+  },
+  {
+   "id": "ser-makers",
+   "name": "Makers",
+   "cadence": "Monthly",
+   "rrule": "",
+   "colour": "#1a4f8a",
+   "parent_activation_id": null,
+   "visibility": "shared"
+  },
+  {
+   "id": "ser-conversations",
+   "name": "Conversations",
+   "cadence": "Monthly",
+   "rrule": "",
+   "colour": "#0f7a4a",
+   "parent_activation_id": null,
+   "visibility": "shared"
+  }
+ ],
+ "ideas": [
+  {
+   "id": "i-1",
+   "title": "Reclaimed-material furniture run",
+   "detail": "Object idea built from demolition material on site.",
+   "kind": "product",
+   "status": "idea",
+   "link_project": "proj-1",
+   "link_activation": "",
+   "visibility": "internal"
+  },
+  {
+   "id": "i-2",
+   "title": "Local ceramicist residency",
+   "detail": "Partner concept for opening season.",
+   "kind": "partner",
+   "status": "idea",
+   "link_project": "",
+   "link_activation": "act-op-2027",
+   "visibility": "shared"
+  }
+ ],
+ "social_ideas": [
+  {
+   "id": "s-1",
+   "title": "Behind the shopfront",
+   "body": "Short vertical series with first-to-market brands.",
+   "theme": "Craft",
+   "channel": "Instagram",
+   "status": "developing",
+   "link_project": "proj-2",
+   "visibility": "internal"
+  },
+  {
+   "id": "s-2",
+   "title": "Opening countdown",
+   "body": "90 day countdown with tenant reveals.",
+   "theme": "Launch",
+   "channel": "Instagram, 小紅書",
+   "status": "ready",
+   "link_project": "proj-1",
+   "visibility": "shared"
+  }
+ ],
+ "quotes": [
+  {
+   "id": "q-1",
+   "project_id": "proj-1",
+   "title": "Identity phase one",
+   "reference": "CY-2027-001",
+   "amount": 85000,
+   "currency": "HKD",
+   "quote_url": "https://docs.google.com/spreadsheets/d/example-quote",
+   "reviewer": "Keung Gor",
+   "status": "submitted",
+   "issued_date": "2026-11-20",
+   "visibility": "internal"
+  },
+  {
+   "id": "q-2",
+   "project_id": "proj-2",
+   "title": "Stories season one",
+   "reference": "CY-2027-002",
+   "amount": 120000,
+   "currency": "HKD",
+   "quote_url": "",
+   "reviewer": "CY Finance",
+   "status": "confirmed",
+   "issued_date": "2026-11-10",
+   "visibility": "shared"
+  }
+ ],
+ "decks": [
+  {
+   "id": "dk-1",
+   "project_id": "proj-1",
+   "title": "Opening season, concept board",
+   "url": "https://docs.google.com/presentation/d/example-deck",
+   "deck_type": "deck",
+   "version": "v3",
+   "is_current": true,
+   "visibility": "shared"
+  },
+  {
+   "id": "dk-2",
+   "project_id": "proj-1",
+   "title": "Opening season, early route",
+   "url": "https://docs.google.com/presentation/d/example-deck-old",
+   "deck_type": "deck",
+   "version": "v1",
+   "is_current": false,
+   "visibility": "shared"
+  }
+ ]
+}

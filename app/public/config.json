@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "client": "Central Yards",
+    "studio": "Adam Studios",
+    "title": "Central Yards x Adam Studios",
+    "tagline": "One workspace for activations, projects, tasks and pitches.",
+    "brand": {
+      "palette": {
+        "black": "#000000",
+        "eggshell": "#f5f1e9",
+        "tan": "#a08967"
+      },
+      "type": {
+        "primary": "Diatype Regular / Medium",
+        "fallback": "Geist, ui-sans-serif, system-ui",
+        "note": "Diatype is licensed and cannot be redistributed. Geist is the stand-in."
+      }
+    }
+  },
+  "lanes": [
+    { "key": "general", "name": "General Central Yards Projects", "sub": "Ongoing work" },
+    { "key": "special", "name": "Special Projects", "sub": "Standalone initiatives leading into 2027" }
+  ],
+  "tiers": [
+    { "key": "rapid", "name": "Rapid", "color": "#0f7a4a", "desc": "Fast, low scope, ship in weeks" },
+    { "key": "standard", "name": "Standard", "color": "#a08967", "desc": "Normal campaign shape" },
+    { "key": "big_ideas", "name": "Big Ideas", "color": "#1a4f8a", "desc": "Concept worth building a year around" },
+    { "key": "big_umbrella", "name": "Big Umbrella", "color": "#7a1f2b", "desc": "Multiple projects under one narrative" }
+  ],
+  "quoteStatuses": [
+    { "key": "submitted", "name": "Submitted", "color": "#a08967" },
+    { "key": "reviewed", "name": "Reviewed", "color": "#1a4f8a" },
+    { "key": "confirmed", "name": "Confirmed", "color": "#0f7a4a" },
+    { "key": "on_hold", "name": "On Hold", "color": "#7a1f2b" }
+  ],
+  "taskStatuses": ["open", "doing", "blocked", "done"],
+  "ownerSides": [
+    { "key": "adam", "name": "ADAM" },
+    { "key": "central_yards", "name": "Central Yards" },
+    { "key": "both", "name": "Both" }
+  ]
+}
