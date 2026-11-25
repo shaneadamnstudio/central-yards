@@ -1,20 +1,21 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Masthead from '../Masthead';
 
 const STATUS = [
-  { key: 'submitted', name: 'Submitted', color: '#a08967' },
-  { key: 'reviewed', name: 'Reviewed', color: '#1a4f8a' },
-  { key: 'confirmed', name: 'Confirmed', color: '#0f7a4a' },
-  { key: 'on_hold', name: 'On Hold', color: '#7a1f2b' },
+  { key: 'submitted', name: 'Submitted', color: 'var(--tan)' },
+  { key: 'reviewed', name: 'Reviewed', color: 'var(--standard)' },
+  { key: 'confirmed', name: 'Confirmed', color: '#1a7a4a' },
+  { key: 'on_hold', name: 'On Hold', color: 'var(--rapid)' },
 ];
 
 function money(n, cur) {
-  if (n === null || n === undefined || n === '') return '';
+  if (n === null || n === undefined || n === '') return '—';
   return `${cur || 'HKD'} ${Number(n).toLocaleString('en-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export default function Finance({ data, open, isAdam }) {
+export default function Finance({ data, open }) {
   const { quotes, projects } = data;
   const [status, setStatus] = useState('all');
 
@@ -29,38 +30,44 @@ export default function Finance({ data, open, isAdam }) {
     [quotes, status]
   );
 
-  const byStatus = (k) => quotes.filter((q) => q.status === k).length;
+  const total = quotes.reduce((s, q) => s + (Number(q.amount) || 0), 0);
+
+  const filter = (
+    <>
+      <button className={status === 'all' ? 'on' : ''} onClick={() => setStatus('all')}>
+        Everything<em>{quotes.length}</em>
+      </button>
+      {STATUS.map((s) => (
+        <button key={s.key} className={status === s.key ? 'on' : ''} onClick={() => setStatus(s.key)}>
+          {s.name}<em>{quotes.filter((q) => q.status === s.key).length}</em>
+        </button>
+      ))}
+    </>
+  );
 
   return (
     <>
-      <div className="head">
-        <div>
-          <h1>Finance</h1>
-          <p>
-            Quotations and invoices, each tied to its project. The current quote link, who
-            is reviewing it and where it stands, so nothing waits on a chase email.
-          </p>
-        </div>
-      </div>
-
-      <div className="tabs">
-        <button className={'tab' + (status === 'all' ? ' on' : '')} onClick={() => setStatus('all')}>
-          All<span className="tab-n">{quotes.length}</span>
-        </button>
-        {STATUS.map((s) => (
-          <button key={s.key} className={'tab' + (status === s.key ? ' on' : '')} onClick={() => setStatus(s.key)}>
-            {s.name}
-            {byStatus(s.key) ? <span className="tab-n">{byStatus(s.key)}</span> : null}
-          </button>
-        ))}
-      </div>
+      <Masthead
+        eyebrow="Central Yards — Finance"
+        title="Quotations and where each one stands"
+        lede={
+          <>
+            Every quote ties to its project and carries the current link, who is reviewing it
+            and one of four states: <b>Submitted</b>, <b>Reviewed</b>, <b>Confirmed</b> or
+            <b> On Hold</b>. Draft quotes stay internal until you share them.
+          </>
+        }
+        count={quotes.length}
+        countLabel={`Quotes, ${total ? money(total, 'HKD') : 'no value yet'}`}
+        filter={filter}
+      />
 
       {shown.length === 0 ? (
         <div className="empty">
-          <h3>No quotes yet</h3>
+          <h3>No quotes in this view</h3>
           <p>
-            A quote links to its project and carries a reviewer and a status: Submitted,
-            Reviewed, Confirmed or On Hold. Draft quotes stay internal until you share them.
+            A quote links to its project and carries a reviewer and a status. Draft quotes
+            stay internal until you share them with Central Yards.
           </p>
         </div>
       ) : (
@@ -88,21 +95,19 @@ export default function Finance({ data, open, isAdam }) {
                     {q.project_id && projName[q.project_id] ? (
                       <button
                         onClick={() => open('project', q.project_id)}
-                        style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', fontSize: 12.5, color: 'var(--blue)' }}
+                        style={{ background: 'none', border: 0, padding: 0, fontSize: 13.5, borderBottom: '1px solid var(--rule)' }}
                       >
                         {projName[q.project_id]}
                       </button>
-                    ) : <span style={{ color: 'var(--ink-40)' }}>None</span>}
+                    ) : <span style={{ color: 'var(--faint)' }}>None</span>}
                   </td>
                   <td className="num">{money(q.amount, q.currency)}</td>
-                  <td>{q.reviewer || <span style={{ color: 'var(--ink-40)' }}>Unassigned</span>}</td>
+                  <td>{q.reviewer || <span style={{ color: 'var(--faint)' }}>Unassigned</span>}</td>
                   <td>
-                    <span className="chip" style={{ background: (st?.color || '#999') + '18', color: st?.color }}>
-                      {st?.name || q.status}
-                    </span>
+                    <span className="chip" style={{ borderLeftColor: st?.color }}>{st?.name || q.status}</span>
                   </td>
                   <td>
-                    {q.quote_url ? <a href={q.quote_url} target="_blank" rel="noreferrer">Open quote</a> : <span style={{ color: 'var(--ink-40)' }}>None</span>}
+                    {q.quote_url ? <a href={q.quote_url} target="_blank" rel="noreferrer">Open quote</a> : <span style={{ color: 'var(--faint)' }}>—</span>}
                   </td>
                 </tr>
               );

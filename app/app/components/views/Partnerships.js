@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Masthead from '../Masthead';
 
 const KINDS = [
-  { key: 'all', name: 'All' },
+  { key: 'all', name: 'Everything' },
   { key: 'partner', name: 'Partners' },
   { key: 'concept', name: 'Concepts' },
   { key: 'product', name: 'Product ideas' },
@@ -11,7 +12,7 @@ const KINDS = [
   { key: 'activation', name: 'Activations' },
 ];
 
-export default function Partnerships({ data, open, isAdam }) {
+export default function Partnerships({ data, open }) {
   const { ideas, projects, activations } = data;
   const [kind, setKind] = useState('all');
 
@@ -22,38 +23,41 @@ export default function Partnerships({ data, open, isAdam }) {
 
   const named = (id, list, key = 'name') => (list.find((x) => x.id === id) || {})[key];
 
+  const filter = (
+    <>
+      {KINDS.map((k) => (
+        <button key={k.key} className={kind === k.key ? 'on' : ''} onClick={() => setKind(k.key)}>
+          {k.name}<em>{k.key === 'all' ? ideas.length : ideas.filter((i) => i.kind === k.key).length}</em>
+        </button>
+      ))}
+    </>
+  );
+
   return (
     <>
-      <div className="head">
-        <div>
-          <h1>Partnerships &amp; Ideas</h1>
-          <p>
-            Potential partners and ADAM's own concepts for Central Yards: product and
-            object ideas, events, activations. Anything here can be linked to a project or
-            a marketing moment, so an idea never sits orphaned.
-          </p>
-        </div>
-      </div>
-
-      <div className="tabs">
-        {KINDS.map((k) => {
-          const n = ideas.filter((i) => i.kind === k.key || k.key === 'all').length;
-          return (
-            <button key={k.key} className={'tab' + (kind === k.key ? ' on' : '')} onClick={() => setKind(k.key)}>
-              {k.name}
-              {n ? <span className="tab-n">{n}</span> : null}
-            </button>
-          );
-        })}
-      </div>
+      <Masthead
+        eyebrow="Central Yards — Partnerships and product ideas"
+        title="Ideas before anything is decided"
+        lede={
+          <>
+            Two kinds of idea sit here: <b>partners</b>, where a named brand could make the
+            thing, and <b>in-house concepts</b>, where the thing exists and nobody is attached
+            yet. Any idea can be linked to a project or a marketing moment, so nothing sits
+            orphaned when a date firms up.
+          </>
+        }
+        count={ideas.length}
+        countLabel="Ideas on the table"
+        filter={filter}
+      />
 
       {shown.length === 0 ? (
         <div className="empty">
           <h3>No ideas captured yet</h3>
           <p>
-            This is where partner names and in-house concepts go. Each one can carry a
-            project link and an activation link, so when a moment firms up you can see
-            which ideas were already built for it.
+            This is where partner names and in-house concepts go. Each one can carry a project
+            link and an activation link, so when a moment firms up you can see which ideas
+            were already built for it.
           </p>
         </div>
       ) : (

@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
+import Masthead from '../Masthead';
 
-export default function Decks({ data, open }) {
+export default function Decks({ data }) {
   const { decks, projects } = data;
 
   const groups = useMemo(() => {
@@ -17,31 +18,32 @@ export default function Decks({ data, open }) {
     return Array.from(map.entries()).map(([key, list]) => ({
       key,
       name: key === '__none' ? 'Unassigned' : projMap[key]?.name || 'Unknown project',
-      project: projMap[key],
       list: list.slice().sort((a, b) => Number(b.is_current) - Number(a.is_current)),
     }));
   }, [decks, projects]);
 
   return (
     <>
-      <div className="head">
-        <div>
-          <h1>Decks &amp; Pitches</h1>
-          <p>
-            One index of every deck and pitch link, grouped by project. The current deck is
-            marked so nobody presents last week's version. The same link also appears
-            inside its project.
-          </p>
-        </div>
-      </div>
+      <Masthead
+        eyebrow="Central Yards — Decks and pitches"
+        title="One index, so nobody presents last week's deck"
+        lede={
+          <>
+            Every deck and pitch link, grouped by project. The current one is marked in the
+            index and surfaced inside its project panel, so there is a single place to check
+            before a meeting.
+          </>
+        }
+        count={decks.length}
+        countLabel="Decks indexed"
+      />
 
       {groups.length === 0 ? (
         <div className="empty">
           <h3>No decks indexed yet</h3>
           <p>
-            Add a deck or pitch link and choose its project. The current one is flagged in
-            the index and surfaced inside the project panel, so there is a single place to
-            check before a meeting.
+            Add a deck or pitch link and choose its project. The current one is flagged in the
+            index and inside the project, so there is one place to look.
           </p>
         </div>
       ) : (
@@ -71,7 +73,7 @@ export default function Decks({ data, open }) {
                       </div>
                     </td>
                     <td>{d.deck_type}</td>
-                    <td>{d.version || <span style={{ color: 'var(--ink-40)' }}>-</span>}</td>
+                    <td>{d.version || <span style={{ color: 'var(--faint)' }}>—</span>}</td>
                     <td>
                       <span className={`chip ${d.visibility === 'internal' ? 'chip-internal' : 'chip-shared'}`}>
                         {d.visibility || 'shared'}

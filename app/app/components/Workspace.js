@@ -16,10 +16,10 @@ const VIEWS = [
   { key: 'calendar', name: 'Activation map' },
   { key: 'projects', name: 'Projects' },
   { key: 'tasks', name: 'To-do' },
-  { key: 'partnerships', name: 'Partnerships & Ideas' },
+  { key: 'partnerships', name: 'Partnerships' },
   { key: 'social', name: 'Social' },
   { key: 'finance', name: 'Finance' },
-  { key: 'decks', name: 'Decks & Pitches' },
+  { key: 'decks', name: 'Decks' },
 ];
 
 const EMPTY = {
@@ -42,10 +42,37 @@ export default function Workspace({ scope }) {
   const [view, setView] = useState('home');
   const [data, setData] = useState(EMPTY);
   const [phase, setPhase] = useState('loading');
-  const [sel, setSel] = useState(null); // { type, id }
+  const [sel, setSel] = useState(null);
   const [error, setError] = useState('');
+  const [clock, setClock] = useState('');
 
-  /* ---------- load ---------- */
+  /* dual clock, carried from the Supply Co. chrome */
+  useEffect(() => {
+    function tick() {
+      const f = (tz) => {
+        try {
+          return new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit', minute: '2-digit', timeZone: tz, hour12: false,
+          }).format(new Date());
+        } catch (e) { return '--:--'; }
+      };
+      setClock(`HKG ${f('Asia/Hong_Kong')}  ·  SFO ${f('America/Los_Angeles')}`);
+    }
+    tick();
+    const t = setInterval(tick, 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  /* the wordmark path is injected into <symbol id="adam"> by public/wordmark-path.js */
+  useEffect(() => {
+    if (document.getElementById('wordmark-loader')) return;
+    const s = document.createElement('script');
+    s.id = 'wordmark-loader';
+    s.src = '/wordmark-path.js';
+    s.defer = true;
+    document.body.appendChild(s);
+  }, []);
+
   useEffect(() => {
     let dead = false;
     async function load() {
@@ -82,7 +109,7 @@ export default function Workspace({ scope }) {
     return () => { dead = true; };
   }, []);
 
-  /* ---------- scope filter: internal items never reach a CY browser ---------- */
+  /* scope filter: internal items never reach a CY browser */
   const visible = useMemo(() => {
     if (isAdam) return data;
     const keep = (rows) => (rows || []).filter((r) => r.visibility !== 'internal');
@@ -93,9 +120,7 @@ export default function Workspace({ scope }) {
       tasks: keep(data.tasks),
       activations: keep(data.activations),
       ideas: keep(data.ideas),
-      // social: ADAM keeps everything; CY only receives what ADAM marked ready or shared
       social_ideas: (data.social_ideas || []).filter((s) => s.status === 'shared' || s.status === 'ready'),
-      // quotes are internal until confirmed; the CY view sees confirmed only
       quotes: (data.quotes || []).filter((q) => q.status === 'confirmed' && q.visibility !== 'internal'),
       decks: keep(data.decks),
     };
@@ -105,8 +130,8 @@ export default function Workspace({ scope }) {
     projects: visible.projects.length,
     tasks: visible.tasks.filter((t) => t.status !== 'done').length,
     activations: visible.activations.length,
-    ideas: visible.ideas.length + visible.social_ideas.length,
-    finance: visible.quotes.filter((q) => q.status !== 'confirmed').length,
+    partnerships: visible.ideas.length,
+    finance: visible.quotes.length,
     decks: visible.decks.length,
   }), [visible]);
 
@@ -119,42 +144,42 @@ export default function Workspace({ scope }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  if (phase === 'loading') {
-    return <div className="boot">Loading workspace.</div>;
-  }
-  if (phase === 'error') {
-    return <div className="boot boot-err">{error}</div>;
-  }
+  if (phase === 'loading') return <div className="boot">Loading workspace</div>;
+  if (phase === 'error') return <div className="boot boot-err">{error}</div>;
 
   const ctx = { data: visible, full: data, isAdam, counts, open, config: data.config };
 
   return (
-    <div className="shell">
-      <nav className="nav">
-        <div className="nav-mark">ADAM STUDIOS</div>
-        <div className="nav-title">Central Yards</div>
-        <div className="nav-scope">
-          {isAdam ? 'ADAM view, internal visible' : 'Central Yards view'}
+    <>
+      <header className="chrome">
+        <nav className="topnav" role="tablist" aria-label="Sections">
+          {VIEWS.map((v) => (
+            <button
+              key={v.key}
+              className="tn-head"
+              role="tab"
+              aria-selected={view === v.key ? 'true' : 'false'}
+              onClick={() => setView(v.key)}
+            >
+              {v.name}
+              {v.key === 'projects' && counts.projects ? <em>{counts.projects}</em> : null}
+              {v.key === 'tasks' && counts.tasks ? <em>{counts.tasks}</em> : null}
+              {v.key === 'calendar' && counts.activations ? <em>{counts.activations}</em> : null}
+            </button>
+          ))}
+        </nav>
+        <div className="chrome-right">
+          <span className="clock">{clock}</span>
+          <span>{isAdam ? 'ADAM' : 'Central Yards'}</span>
+          <a className="signout" href="/auth/signout">Sign out</a>
         </div>
-
-        {VIEWS.map((v) => (
-          <button
-            key={v.key}
-            className={'nav-item' + (view === v.key ? ' on' : '')}
-            onClick={() => setView(v.key)}
-          >
-            {v.name}
-            {counts[v.key] > 0 ? <span className="nav-count">{counts[v.key]}</span> : null}
-          </button>
-        ))}
-
-        <div className="nav-foot">
-          2027 activation map, projects, tasks and pitches in one place.
-          <div style={{ marginTop: 8 }}><a href="/auth/signout">Sign out</a></div>
-        </div>
-      </nav>
+      </header>
 
       <main className="main">
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+          <symbol id="adam" viewBox="0 0 2228 674" />
+        </svg>
+
         {view === 'home' && <Home {...ctx} />}
         {view === 'calendar' && <Calendar {...ctx} />}
         {view === 'projects' && <Projects {...ctx} />}
@@ -166,15 +191,6 @@ export default function Workspace({ scope }) {
       </main>
 
       {sel ? <Drawer sel={sel} ctx={ctx} onClose={close} /> : null}
-
-      <style jsx global>{`
-        .boot {
-          min-height: 100vh; display: grid; place-items: center;
-          background: #f5f1e9; color: #6b6355; font-size: 13px;
-          font-family: Geist, ui-sans-serif, system-ui, sans-serif;
-        }
-        .boot-err { color: #7a1f2b; max-width: 420px; text-align: center; line-height: 1.6; }
-      `}</style>
-    </div>
+    </>
   );
 }

@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Masthead from '../Masthead';
 
 const STAGES = [
-  { key: 'dump', name: 'Brain dump', color: '#8a8273' },
-  { key: 'developing', name: 'Developing', color: '#a08967' },
-  { key: 'ready', name: 'Ready to discuss', color: '#1a4f8a' },
-  { key: 'shared', name: 'Shared with CY', color: '#0f7a4a' },
+  { key: 'dump', name: 'Brain dump', color: 'var(--faint)' },
+  { key: 'developing', name: 'Developing', color: 'var(--tan)' },
+  { key: 'ready', name: 'Ready', color: 'var(--standard)' },
+  { key: 'shared', name: 'Shared', color: '#1a7a4a' },
 ];
 
 export default function Social({ data, open, isAdam }) {
-  const { social_ideas, projects } = data;
+  const { social_ideas } = data;
   const [stage, setStage] = useState('all');
 
   const shown = useMemo(
@@ -18,24 +19,28 @@ export default function Social({ data, open, isAdam }) {
     [social_ideas, stage]
   );
 
-  const byStage = (k) => social_ideas.filter((s) => s.status === k).length;
-
   if (!isAdam) {
     const shared = social_ideas.filter((s) => s.visibility === 'shared' || s.status === 'shared' || s.status === 'ready');
     return (
       <>
-        <div className="head">
-          <div>
-            <h1>Social</h1>
-            <p>Ideas ADAM has shared for discussion with Central Yards.</p>
-          </div>
-        </div>
+        <Masthead
+          eyebrow="Central Yards — Social"
+          title="Content themes shared for discussion"
+          lede={
+            <>
+              ADAM develops social thinking here and shares the ideas worth discussing.
+              Anything not yet marked ready stays internal.
+            </>
+          }
+          count={shared.length}
+          countLabel="Shared ideas"
+        />
         {shared.length === 0 ? (
           <div className="empty">
             <h3>Nothing shared yet</h3>
             <p>
               ADAM works up content themes here and shares the ones worth discussing.
-              Shared ideas will appear on this page.
+              Shared ideas appear on this page.
             </p>
           </div>
         ) : (
@@ -57,40 +62,42 @@ export default function Social({ data, open, isAdam }) {
     );
   }
 
+  const filter = (
+    <>
+      <button className={stage === 'all' ? 'on' : ''} onClick={() => setStage('all')}>
+        Everything<em>{social_ideas.length}</em>
+      </button>
+      {STAGES.map((s) => (
+        <button key={s.key} className={stage === s.key ? 'on' : ''} onClick={() => setStage(s.key)}>
+          {s.name}<em>{social_ideas.filter((x) => x.status === s.key).length}</em>
+        </button>
+      ))}
+    </>
+  );
+
   return (
     <>
-      <div className="head">
-        <div>
-          <h1>Social</h1>
-          <p>
-            ADAM's space to brain-dump, develop content themes and work out how the Central
-            Yards brand builds on social over time. Ideas stay internal until you mark one
-            ready to discuss.
-          </p>
-        </div>
-        <div className="head-actions">
-          <span className="chip chip-internal">ADAM only</span>
-        </div>
-      </div>
-
-      <div className="tabs">
-        <button className={'tab' + (stage === 'all' ? ' on' : '')} onClick={() => setStage('all')}>
-          All<span className="tab-n">{social_ideas.length}</span>
-        </button>
-        {STAGES.map((s) => (
-          <button key={s.key} className={'tab' + (stage === s.key ? ' on' : '')} onClick={() => setStage(s.key)}>
-            {s.name}
-            {byStage(s.key) ? <span className="tab-n">{byStage(s.key)}</span> : null}
-          </button>
-        ))}
-      </div>
+      <Masthead
+        eyebrow="Central Yards — Social, ADAM only"
+        title="Where the social thinking gets worked out"
+        lede={
+          <>
+            A place to brain-dump, develop themes, and show how the Central Yards brand builds
+            on social over time. Everything starts internal. When an idea is worth discussing,
+            mark it ready and it appears on the Central Yards side.
+          </>
+        }
+        count={social_ideas.length}
+        countLabel="Ideas in the dump"
+        filter={filter}
+      />
 
       {shown.length === 0 ? (
         <div className="empty">
           <h3>Nothing here yet</h3>
           <p>
-            Drop raw thoughts first, the theme comes later. A note can start as one line
-            and grow into a content pillar without leaving this page.
+            Drop raw thoughts first, the theme comes later. A note can start as one line and
+            grow into a content pillar without leaving this page.
           </p>
         </div>
       ) : (
@@ -102,7 +109,7 @@ export default function Social({ data, open, isAdam }) {
                 <h4>{s.title}</h4>
                 {s.body ? <p>{s.body}</p> : null}
                 <div className="idea-meta">
-                  {st ? <span className="chip" style={{ background: st.color + '18', color: st.color }}>{st.name}</span> : null}
+                  {st ? <span className="chip" style={{ borderLeftColor: st.color }}>{st.name}</span> : null}
                   {s.theme ? <span className="chip">{s.theme}</span> : null}
                   {s.channel ? <span className="chip">{s.channel}</span> : null}
                 </div>

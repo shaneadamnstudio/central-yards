@@ -15,8 +15,15 @@ const SECRET = process.env.GATE_SECRET || '';
 
 const PUBLIC = ['/login', '/auth/gate', '/auth/signout'];
 
+/* assets the gate page itself needs, and brand files */
+const ALWAYS = ['/fonts/', '/wordmark-path.js', '/favicon.ico'];
+
 export function middleware(request) {
   const { pathname } = request.nextUrl;
+
+  if (ALWAYS.some((p) => pathname === p || pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
 
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
     return NextResponse.next();
