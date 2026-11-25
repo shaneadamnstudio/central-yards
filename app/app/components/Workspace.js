@@ -82,14 +82,16 @@ export default function Workspace({ scope }) {
         const [cfg, cal, seed, saved] = await Promise.all([
           fetch('/config.json').then((r) => r.json()),
           fetch('/hk-calendar.json').then((r) => r.json()),
-          fetch('/seed.json').then((r) => r.json()),
+          fetch('/api/workspace').then((r) => (r.ok ? r.json() : ({}))).catch(() => ({})),
           fetch('/api/state').then((r) => (r.ok ? r.json() : ({}))).catch(() => ({})),
         ]);
         if (dead) return;
 
-        /* saved writes win over the seed: a ticked task, a moved activation */
-        const taskState = saved.tasks || {};
-        const placements = saved.placements || {};
+        /* When Supabase holds the data, the rows already carry the saved state.
+           Only merge the local file when we fell back to the seed. */
+        const fromSeed = seed.source !== 'supabase';
+        const taskState = fromSeed ? (saved.tasks || {}) : {};
+        const placements = fromSeed ? (saved.placements || {}) : {};
 
         setData({
           ...EMPTY,

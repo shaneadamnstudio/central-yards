@@ -33,3 +33,6 @@ Thumbs.db
 
 # runtime state written by the app (task ticks, activation placements)
 app/data/state.json
+
+# local env with keys
+app/.env.local
