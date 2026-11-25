@@ -16,7 +16,7 @@ const SECRET = process.env.GATE_SECRET || '';
 const PUBLIC = ['/login', '/auth/gate', '/auth/signout'];
 
 /* assets the gate page itself needs, and brand files */
-const ALWAYS = ['/fonts/', '/wordmark-path.js', '/favicon.ico'];
+const ALWAYS = ['/fonts/', '/wordmark-path.js', '/favicon.ico', '/icon.svg', '/apple-icon.png'];
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
