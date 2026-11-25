@@ -3,7 +3,7 @@
   "note": "Starter data. Projects and tasks arrive from the ClickUp / Google Sheet sync. Until then the views state they are empty rather than showing invented projects.",
   "client": "Central Yards",
   "studio": "Adam Studios",
-  "WARNING": "SAMPLE DATA seeded for testing on 25 Nov 2026. Replace with real projects/tasks from the tracker, or empty these lists and connect the database."
+  "WARNING": "Seed carries identity and copy only. Task status and activation dates are owned by the database and are deliberately absent here: a value present in both places wins the merge and makes removal impossible."
  },
  "projects": [
   {
@@ -63,7 +63,6 @@
    "owner_name": "Keung Gor",
    "owner_side": "adam",
    "due_date": "2026-11-30",
-   "status": "open",
    "awaiting_from": "Central Yards marketing",
    "link_url": "https://docs.google.com/document/d/example-feedback",
    "visibility": "shared"
@@ -76,7 +75,6 @@
    "owner_name": "CY Marketing",
    "owner_side": "central_yards",
    "due_date": "2026-12-02",
-   "status": "open",
    "awaiting_from": "",
    "link_url": "",
    "visibility": "shared"
@@ -89,7 +87,6 @@
    "owner_name": "Shane",
    "owner_side": "adam",
    "due_date": "2026-12-05",
-   "status": "open",
    "awaiting_from": "",
    "link_url": "",
    "visibility": "internal"
@@ -120,8 +117,6 @@
    "id": "act-op-2027",
    "title": "Central Yards phase one opening",
    "detail": "Henderson Land phase one, around 100 first-to-market brands, five duplex maisons. Target month October 2027.",
-   "start_date": "2027-10-01",
-   "end_date": "2027-10-31",
    "audience": "joint",
    "series_id": null,
    "pitch_room": true,

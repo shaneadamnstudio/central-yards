@@ -82,16 +82,23 @@ export default function Workspace({ scope }) {
         const [cfg, cal, seed, saved] = await Promise.all([
           fetch('/config.json').then((r) => r.json()),
           fetch('/hk-calendar.json').then((r) => r.json()),
-          fetch('/api/workspace').then((r) => (r.ok ? r.json() : ({}))).catch(() => ({})),
-          fetch('/api/state').then((r) => (r.ok ? r.json() : ({}))).catch(() => ({})),
+          fetch('/api/workspace', { cache: 'no-store' }).then(async (r) => {
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(d.error || `workspace ${r.status}`);
+            return d;
+          }),
+          fetch('/api/state', { cache: 'no-store' }).then(async (r) => {
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(d.error || `state ${r.status}`);
+            return d;
+          }),
         ]);
         if (dead) return;
 
-        /* When Supabase holds the data, the rows already carry the saved state.
-           Only merge the local file when we fell back to the seed. */
-        const fromSeed = seed.source !== 'supabase';
-        const taskState = fromSeed ? (saved.tasks || {}) : {};
-        const placements = fromSeed ? (saved.placements || {}) : {};
+        /* The database owns status and dates. The seed deliberately carries
+           neither, so a value cannot exist in two places and win the merge. */
+        const taskState = saved.tasks || {};
+        const placements = saved.placements || {};
 
         setData({
           ...EMPTY,
@@ -99,16 +106,16 @@ export default function Workspace({ scope }) {
           calendar: cal,
           projects: seed.projects || [],
           project_links: seed.project_links || [],
-          tasks: (seed.tasks || []).map((t) => (
-            Object.prototype.hasOwnProperty.call(taskState, t.id)
-              ? { ...t, status: taskState[t.id] || t.status }
-              : t
-          )),
-          activations: (seed.activations || []).map((a) => (
-            placements[a.id]
-              ? { ...a, start_date: placements[a.id].start_date, end_date: placements[a.id].end_date || a.end_date }
-              : a
-          )),
+          tasks: (seed.tasks || []).map((t) => ({
+            ...t,
+            status: taskState[t.id] || 'open',
+          })),
+          activations: (seed.activations || []).map((a) => {
+            const p = placements[a.id];
+            return p
+              ? { ...a, start_date: p.start_date, end_date: p.end_date || null }
+              : a;
+          }),
           activation_support: seed.activation_support || [],
           series: seed.series || [],
           ideas: seed.ideas || [],
@@ -120,7 +127,7 @@ export default function Workspace({ scope }) {
         setPhase('ready');
       } catch (e) {
         if (dead) return;
-        setError('Could not load the workspace data. ' + (e?.message || ''));
+        setError('Could not load the workspace. ' + (e?.message || 'Unknown error.'));
         setPhase('error');
       }
     }

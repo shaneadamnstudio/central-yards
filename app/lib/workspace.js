@@ -1,12 +1,12 @@
 /**
- * Reads the workspace from Supabase, falling back to public/seed.json.
+ * Reads the workspace from Supabase.
  *
- * The app is usable before the schema is applied and reports which source it
- * used, so a fallback is never mistaken for live data.
+ * No seed fallback for the tables themselves. If the schema is missing the
+ * page must say so rather than silently rendering content that the database
+ * cannot save: a fallback that looks like live data is worse than an error,
+ * because every write then appears to work and none of them persist.
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -14,57 +14,49 @@ const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 let sb;
 function db() {
-  if (!URL || !KEY) return null;
-  if (!sb) sb = createClient(URL, KEY, {
-    auth: { persistSession: false },
-    global: {
-      /* every read must hit the database, never a cached response */
-      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
-    },
-  });
+  if (!URL || !KEY) {
+    throw new Error('Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.');
+  }
+  if (!sb) {
+    sb = createClient(URL, KEY, {
+      auth: { persistSession: false },
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
+    });
+  }
   return sb;
 }
 
-const TABLES = [
-  ['projects', 'projects'],
-  ['project_links', 'project_links'],
-  ['tasks', 'tasks'],
-  ['activations', 'activations'],
-  ['activation_support', 'activation_support'],
-  ['series', 'series'],
-  ['ideas', 'ideas'],
-  ['social_ideas', 'social_ideas'],
-  ['quotes', 'quotes'],
-  ['decks', 'decks'],
+export const TABLES = [
+  'projects',
+  'project_links',
+  'tasks',
+  'activations',
+  'activation_support',
+  'series',
+  'ideas',
+  'social_ideas',
+  'quotes',
+  'decks',
 ];
 
 export async function loadWorkspace() {
   const client = db();
+  const results = await Promise.all(TABLES.map((t) => client.from(t).select('*')));
 
-  if (client) {
-    const results = await Promise.all(TABLES.map(([table]) => client.from(table).select('*')));
-    const failed = results.filter((r) => r.error);
+  const failed = results
+    .map((r, i) => (r.error ? { table: TABLES[i], error: r.error.message } : null))
+    .filter(Boolean);
 
-    if (!failed.length) {
-      const out = { source: 'supabase' };
-      TABLES.forEach(([, key], i) => { out[key] = results[i].data || []; });
-      return out;
-    }
-
-    const why = (failed[0].error && failed[0].error.message) || 'unknown';
-    console.warn('[workspace] supabase read failed, using seed.json:', why);
+  if (failed.length) {
+    /* name the missing table, do not degrade to invented content */
+    const first = failed[0];
+    throw new Error(
+      `Table ${first.table} is unavailable (${first.error}). ` +
+      'Apply sql/002_live_schema.sql to the project before running the app.'
+    );
   }
 
-  /* seed fallback, read straight off disk so it works in any runtime */
-  try {
-    const file = path.join(process.cwd(), 'public', 'seed.json');
-    const seed = JSON.parse(await fs.readFile(file, 'utf8'));
-    const out = { source: 'seed' };
-    TABLES.forEach(([, key]) => { out[key] = seed[key] || []; });
-    return out;
-  } catch (e) {
-    const out = { source: 'empty' };
-    TABLES.forEach(([, key]) => { out[key] = []; });
-    return out;
-  }
+  const out = { source: 'supabase' };
+  TABLES.forEach((t, i) => { out[t] = results[i].data || []; });
+  return out;
 }
