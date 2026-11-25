@@ -519,6 +519,228 @@ a { color: inherit; }
   cursor: pointer;
 }
 
+/* ---------- the month calendar ----------
+   A calendar app's month grid: seven equal columns, day cells tall enough for
+   their events, events drawn inside the cell. The whole thing is one bordered
+   table-like block so it reads as a calendar rather than a set of cards. */
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cal-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  min-width: 148px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.monthview {
+  border: 1px solid var(--black);
+  background: var(--eggshell);
+}
+.mv-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--black);
+  background: rgba(0, 0, 0, .03);
+}
+.mv-weekdays span {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  padding: 8px 4px;
+  border-right: 1px solid var(--rule);
+}
+.mv-weekdays span:last-child { border-right: 0; }
+
+.mv-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(96px, auto);
+}
+.mv-cell {
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: 5px 5px 6px;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background var(--t-fast) var(--ease-out);
+  overflow: hidden;
+}
+.mv-cell:nth-child(7n) { border-right: 0; }
+.mv-cell.mv-outside { background: rgba(0, 0, 0, .022); }
+.mv-cell.mv-outside .mv-daynum { color: var(--faint); opacity: .5; }
+.mv-cell.mv-today { background: rgba(160, 137, 103, .1); }
+.mv-cell.mv-over { background: rgba(0, 0, 0, .07); outline: 1px dashed var(--black); outline-offset: -2px; }
+
+.mv-daynum {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: var(--muted);
+  line-height: 1;
+  padding: 2px 1px 3px;
+  flex: 0 0 auto;
+}
+.mv-today .mv-daynum {
+  color: var(--eggshell);
+  background: var(--black);
+  display: inline-block;
+  padding: 2px 5px;
+  align-self: flex-start;
+  border-radius: 2px;
+}
+
+.mv-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+/* the layer chips (holidays etc) occupy their own fixed strip so they never
+   push the event lanes down. Without this the bar steps on any day a holiday
+   shares, which made one span read as many separate chips. */
+/* A constant strip height, always, whether or not the day has layer chips.
+   Sizing to content is what let a holiday push the event bar down one row. */
+.mv-dates-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 32px;
+  overflow: hidden;
+  flex: 0 0 32px;
+}
+.mv-strip-empty { height: 32px; flex: 0 0 32px; }
+
+/* one constant lane height too, so a bar and an empty lane measure the same */
+.mv-act, .mv-lane {
+  height: 16px;
+  flex: 0 0 16px;
+  line-height: 16px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* a continuation day bleeds to the cell edge so consecutive days touch and
+   the span reads as one ribbon, not a row of separate chips */
+.mv-act.mv-cont {
+  margin-left: -5px;
+  margin-right: -5px;
+  border-radius: 0;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-left: 0;
+}
+/* the last day of a span closes the ribbon */
+.mv-act.mv-cont.mv-end {
+  margin-right: -5px;
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+/* the first day opens it */
+.mv-act.mv-start {
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+/* a continuation day keeps the bar's height even with no text, so the lane
+   never collapses and the event reads as one line across the month */
+
+.mv-date { order: 0; }
+/* an empty lane is a bar-sized gap: it holds the row open so every event
+   stays on its own line for the whole month */
+.mv-lane {
+  display: block;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+/* a date layer entry: small, tinted, and clipped rather than wrapped so the
+   row height stays stable */
+.mv-date {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .03em;
+  line-height: 1.3;
+  padding: 2px 4px;
+  border-radius: 2px;
+  border-left: 2px solid var(--rule-strong);
+  background: rgba(0, 0, 0, .04);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mv-date-holiday { border-left-color: var(--rapid); background: rgba(185, 28, 28, .09); color: #8c1c1c; }
+.mv-date-school { border-left-color: var(--standard); background: rgba(29, 78, 216, .08); color: #1a3f8f; }
+.mv-date-cny { border-left-color: var(--art); background: rgba(111, 74, 19, .1); color: #5c3d10; }
+.mv-date-custom { border-left-color: rgba(0, 0, 0, .35); }
+
+/* an activation: the important thing on the day, so it is bolder and taller
+   than a layer entry and carries the brand rule down its left edge */
+.mv-act {
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+  padding: 3px 5px;
+  border-radius: 2px;
+  border: 0;
+  border-left: 3px solid var(--tan);
+  background: rgba(160, 137, 103, .22);
+  color: var(--black);
+  cursor: grab;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: box-shadow var(--t-fast) var(--ease-out), transform var(--t-fast) var(--spring-quick);
+}
+.mv-act:hover { box-shadow: 1px 2px 0 rgba(0, 0, 0, .16); transform: translateY(-1px); }
+.mv-act.mv-act-adam { border-left-color: var(--black); background: rgba(0, 0, 0, .1); }
+.mv-act.mv-act-cy { border-left-color: var(--standard); background: rgba(29, 78, 216, .13); }
+.mv-act.mv-act-joint { border-left-color: var(--tan); background: rgba(160, 137, 103, .26); }
+
+/* a multi-day event reads as one bar across the cells: the label sits on the
+   first day, the continuation days are a filled strip with no side gaps, and
+   only the true end keeps a rounded corner.
+   (the bleed values live with the other .mv-cont rules above; this block must
+   not redeclare margins or it wins on source order and reopens the gap) */
+.mv-act.mv-mid {
+  border-radius: 0;
+}
+
+.mv-act.dragging { opacity: .45; outline: 2px solid var(--black); outline-offset: 1px; cursor: grabbing; }
+
+/* the month on a phone: two letters of weekday, smaller cells, still a grid */
+@media (max-width: 760px) {
+  .cal-nav { flex-wrap: wrap; gap: 6px; }
+  .cal-title { min-width: 0; font-size: 10px; }
+  .mv-weekdays span { font-size: 7px; padding: 6px 2px; letter-spacing: .04em; }
+  .mv-grid { grid-auto-rows: minmax(68px, auto); }
+  .mv-cell { min-height: 68px; padding: 3px 3px 4px; gap: 2px; }
+  .mv-daynum { font-size: 9px; padding: 1px 1px 2px; }
+  .mv-date { font-size: 6.5px; padding: 1px 3px; }
+  .mv-act { font-size: 8px; padding: 2px 3px; }
+}
+@media (max-width: 480px) {
+  .mv-weekdays span { font-size: 6.5px; }
+  .mv-grid { grid-auto-rows: minmax(58px, auto); }
+  .mv-cell { min-height: 58px; }
+  /* on the narrowest screens an event shows as a coloured bar, not text:
+     a truncated word is noise, a bar still reads as "something here" */
+  .mv-act { font-size: 0; padding: 3px; line-height: 0; height: 7px; }
+  .mv-date { font-size: 0; padding: 2px; height: 4px; border-left-width: 0; }
+}
+
 /* ---------- year calendar ----------
    Twelve months, Monday first. The calendar is the primary read of the
    activation map; the quarter columns are the secondary one. */

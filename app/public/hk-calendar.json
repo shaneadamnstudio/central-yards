@@ -5,31 +5,181 @@
     "note": "kind: holiday = published general holiday, school = school holiday period, cny = Lunar New Year run-up, typhoon = typhoon signal behaviour, custom = team-entered recurring date."
   },
   "dates": [
-    { "id": "hk-ny-2027", "title": "New Year's Day", "kind": "holiday", "start": "2027-01-01", "end": "2027-01-01" },
-    { "id": "hk-lny-eve-2027", "title": "Lunar New Year run-up begins", "kind": "cny", "start": "2027-01-30", "end": "2027-02-05", "note": "Week before LNY. Retail peak, quiet agencies, last-minute production risk." },
-    { "id": "hk-lny-1-2027", "title": "Lunar New Year's Day", "kind": "holiday", "start": "2027-02-06", "end": "2027-02-06" },
-    { "id": "hk-lny-2-2027", "title": "Second day of LNY (Sunday)", "kind": "holiday", "start": "2027-02-07", "end": "2027-02-07" },
-    { "id": "hk-lny-3-2027", "title": "Third day of Lunar New Year", "kind": "holiday", "start": "2027-02-08", "end": "2027-02-08" },
-    { "id": "hk-lny-4-2027", "title": "Fourth day of Lunar New Year (substitute)", "kind": "holiday", "start": "2027-02-09", "end": "2027-02-09", "note": "Second day fell on a Sunday, fourth day designated in substitution." },
-    { "id": "hk-lny-tail-2027", "title": "LNY tail, first week back", "kind": "cny", "start": "2027-02-10", "end": "2027-02-14", "note": "Slow restart. Avoid launch dates." },
-    { "id": "hk-school-easter-2027", "title": "School Easter break", "kind": "school", "start": "2027-03-24", "end": "2027-04-04", "note": "Indicative. Family travel peak, lower local footfall in malls." },
-    { "id": "hk-gf-2027", "title": "Good Friday", "kind": "holiday", "start": "2027-03-26", "end": "2027-03-26" },
-    { "id": "hk-gf2-2027", "title": "The day following Good Friday", "kind": "holiday", "start": "2027-03-27", "end": "2027-03-27" },
-    { "id": "hk-em-2027", "title": "Easter Monday", "kind": "holiday", "start": "2027-03-29", "end": "2027-03-29" },
-    { "id": "hk-cm-2027", "title": "Ching Ming Festival", "kind": "holiday", "start": "2027-04-05", "end": "2027-04-05" },
-    { "id": "hk-labour-2027", "title": "Labour Day", "kind": "holiday", "start": "2027-05-01", "end": "2027-05-01" },
-    { "id": "hk-buddha-2027", "title": "Birthday of the Buddha", "kind": "holiday", "start": "2027-05-13", "end": "2027-05-13" },
-    { "id": "hk-tuenng-2027", "title": "Tuen Ng Festival", "kind": "holiday", "start": "2027-06-09", "end": "2027-06-09" },
-    { "id": "hk-school-summer-2027", "title": "School summer holiday", "kind": "school", "start": "2027-07-12", "end": "2027-08-31", "note": "Indicative. Family programming window, strongest footfall lever in the year." },
-    { "id": "hk-sar-2027", "title": "HKSAR Establishment Day", "kind": "holiday", "start": "2027-07-01", "end": "2027-07-01" },
-    { "id": "hk-maf-2027", "title": "Day following Mid-Autumn Festival", "kind": "holiday", "start": "2027-09-16", "end": "2027-09-16" },
-    { "id": "hk-maf-run-2027", "title": "Mid-Autumn run-up", "kind": "cny", "start": "2027-09-08", "end": "2027-09-15", "note": "Lantern and gifting window. Strong visual moment for activations." },
-    { "id": "hk-nat-2027", "title": "National Day", "kind": "holiday", "start": "2027-10-01", "end": "2027-10-01" },
-    { "id": "hk-chung-2027", "title": "Chung Yeung Festival", "kind": "holiday", "start": "2027-10-08", "end": "2027-10-08" },
-    { "id": "hk-cy-open-2027", "title": "Central Yards phase one opening target", "kind": "custom", "start": "2027-10-01", "end": "2027-10-31", "note": "Henderson Land phase one, October 2027. Month-level until a date is confirmed." },
-    { "id": "hk-xmas-2027", "title": "Christmas Day", "kind": "holiday", "start": "2027-12-25", "end": "2027-12-25" },
-    { "id": "hk-boxing-2027", "title": "First weekday after Christmas", "kind": "holiday", "start": "2027-12-27", "end": "2027-12-27" },
-    { "id": "hk-xmas-peak-2027", "title": "Christmas retail peak", "kind": "custom", "start": "2027-12-01", "end": "2027-12-31", "note": "Strongest gifting month. Book production by September." }
+    {
+      "id": "hk-ny-2027",
+      "title": "New Year's Day",
+      "kind": "holiday",
+      "start": "2027-01-01",
+      "end": "2027-01-01"
+    },
+    {
+      "id": "hk-lny-eve-2027",
+      "title": "Lunar New Year run-up begins",
+      "kind": "cny",
+      "start": "2027-01-30",
+      "end": "2027-02-05",
+      "note": "Week before LNY. Retail peak, quiet agencies, last-minute production risk."
+    },
+    {
+      "id": "hk-lny-1-2027",
+      "title": "Lunar New Year's Day",
+      "kind": "holiday",
+      "start": "2027-02-06",
+      "end": "2027-02-06"
+    },
+    {
+      "id": "hk-lny-2-2027",
+      "title": "Second day of LNY (Sunday)",
+      "kind": "holiday",
+      "start": "2027-02-07",
+      "end": "2027-02-07"
+    },
+    {
+      "id": "hk-lny-3-2027",
+      "title": "Third day of Lunar New Year",
+      "kind": "holiday",
+      "start": "2027-02-08",
+      "end": "2027-02-08"
+    },
+    {
+      "id": "hk-lny-4-2027",
+      "title": "Fourth day of Lunar New Year (substitute)",
+      "kind": "holiday",
+      "start": "2027-02-09",
+      "end": "2027-02-09",
+      "note": "Second day fell on a Sunday, fourth day designated in substitution."
+    },
+    {
+      "id": "hk-lny-tail-2027",
+      "title": "LNY tail, first week back",
+      "kind": "cny",
+      "start": "2027-02-10",
+      "end": "2027-02-14",
+      "note": "Slow restart. Avoid launch dates."
+    },
+    {
+      "id": "hk-school-easter-2027",
+      "title": "School Easter break",
+      "kind": "school",
+      "start": "2027-03-24",
+      "end": "2027-04-04",
+      "note": "Indicative. Family travel peak, lower local footfall in malls."
+    },
+    {
+      "id": "hk-gf-2027",
+      "title": "Good Friday",
+      "kind": "holiday",
+      "start": "2027-03-26",
+      "end": "2027-03-26"
+    },
+    {
+      "id": "hk-gf2-2027",
+      "title": "The day following Good Friday",
+      "kind": "holiday",
+      "start": "2027-03-27",
+      "end": "2027-03-27"
+    },
+    {
+      "id": "hk-em-2027",
+      "title": "Easter Monday",
+      "kind": "holiday",
+      "start": "2027-03-29",
+      "end": "2027-03-29"
+    },
+    {
+      "id": "hk-cm-2027",
+      "title": "Ching Ming Festival",
+      "kind": "holiday",
+      "start": "2027-04-05",
+      "end": "2027-04-05"
+    },
+    {
+      "id": "hk-labour-2027",
+      "title": "Labour Day",
+      "kind": "holiday",
+      "start": "2027-05-01",
+      "end": "2027-05-01"
+    },
+    {
+      "id": "hk-buddha-2027",
+      "title": "Birthday of the Buddha",
+      "kind": "holiday",
+      "start": "2027-05-13",
+      "end": "2027-05-13"
+    },
+    {
+      "id": "hk-tuenng-2027",
+      "title": "Tuen Ng Festival",
+      "kind": "holiday",
+      "start": "2027-06-09",
+      "end": "2027-06-09"
+    },
+    {
+      "id": "hk-school-summer-2027",
+      "title": "School summer holiday",
+      "kind": "school",
+      "start": "2027-07-12",
+      "end": "2027-08-31",
+      "note": "Indicative. Family programming window, strongest footfall lever in the year."
+    },
+    {
+      "id": "hk-sar-2027",
+      "title": "HKSAR Establishment Day",
+      "kind": "holiday",
+      "start": "2027-07-01",
+      "end": "2027-07-01"
+    },
+    {
+      "id": "hk-maf-2027",
+      "title": "Day following Mid-Autumn Festival",
+      "kind": "holiday",
+      "start": "2027-09-16",
+      "end": "2027-09-16"
+    },
+    {
+      "id": "hk-maf-run-2027",
+      "title": "Mid-Autumn run-up",
+      "kind": "cny",
+      "start": "2027-09-08",
+      "end": "2027-09-15",
+      "note": "Lantern and gifting window. Strong visual moment for activations."
+    },
+    {
+      "id": "hk-nat-2027",
+      "title": "National Day",
+      "kind": "holiday",
+      "start": "2027-10-01",
+      "end": "2027-10-01"
+    },
+    {
+      "id": "hk-chung-2027",
+      "title": "Chung Yeung Festival",
+      "kind": "holiday",
+      "start": "2027-10-08",
+      "end": "2027-10-08"
+    },
+    {
+      "id": "hk-xmas-2027",
+      "title": "Christmas Day",
+      "kind": "holiday",
+      "start": "2027-12-25",
+      "end": "2027-12-25"
+    },
+    {
+      "id": "hk-boxing-2027",
+      "title": "First weekday after Christmas",
+      "kind": "holiday",
+      "start": "2027-12-27",
+      "end": "2027-12-27"
+    },
+    {
+      "id": "hk-xmas-peak-2027",
+      "title": "Christmas retail peak",
+      "kind": "custom",
+      "start": "2027-12-01",
+      "end": "2027-12-31",
+      "note": "Strongest gifting month. Book production by September."
+    }
   ],
   "typhoon": {
     "note": "Typhoon behaviour is not a fixed date. Hong Kong Observatory raises signals; T8 and above closes most retail and all outdoor production. These are the working rules the layer applies to any activation date.",
@@ -39,6 +189,10 @@
       "Signal lowered to 3: allow two hours to reopen",
       "Black rainstorm: same as signal 8 for outdoor work"
     ],
-    "season": { "start_month": 5, "end_month": 11, "note": "Typhoon season overlaps the whole activation year. Keep a two week buffer on any outdoor build between May and November." }
+    "season": {
+      "start_month": 5,
+      "end_month": 11,
+      "note": "Typhoon season overlaps the whole activation year. Keep a two week buffer on any outdoor build between May and November."
+    }
   }
 }

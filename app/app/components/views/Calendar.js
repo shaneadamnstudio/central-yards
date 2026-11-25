@@ -1,11 +1,15 @@
 'use client';
 
+/* A real month calendar: a grid of day cells with the events drawn inside
+   them, the way a calendar app works. Month is the primary view; year and
+   quarters remain as secondary scans. */
+
 import { useState, useMemo } from 'react';
 import Masthead from '../Masthead';
 import useReveal from '../useReveal';
 import {
-  MONTH_NAMES, MONTH_SHORT, WEEKDAYS, iso, parse, daysInMonth, weekdayMon,
-  shortDate, todayISO, overlapsMonth, daysInMonthFor,
+  MONTH_NAMES, WEEKDAYS, iso, parse, daysInMonth, weekdayMon,
+  shortDate, todayISO, overlapsMonth,
 } from './calDates';
 
 const LAYERS = [
@@ -17,22 +21,21 @@ const LAYERS = [
 ];
 
 const VIEWS = [
-  { key: 'calendar', name: 'Calendar' },
+  { key: 'month', name: 'Month' },
+  { key: 'year', name: 'Year' },
   { key: 'quarters', name: 'By quarter' },
 ];
-
-function qOf(start) {
-  return Math.floor(parse(start).getMonth() / 3);
-}
 
 export default function Calendar({ data, open, placeActivation }) {
   const { activations, series, calendar } = data;
   const now = new Date();
   const years = [2026, 2027, 2028];
   const [year, setYear] = useState(years.includes(now.getFullYear() + 1) ? now.getFullYear() + 1 : 2027);
-  const [mode, setMode] = useState('calendar');
-  const [focus, setFocus] = useState(null); // null = year, 0-11 = one month
+  const [month, setMonth] = useState(now.getMonth());
+  const [mode, setMode] = useState('month');
   const [on, setOn] = useState({ holiday: true, school: true, cny: true, custom: true, typhoon: false });
+  const [dragging, setDragging] = useState(null);
+  const [overDay, setOverDay] = useState(null);
 
   const toggle = (k) => setOn((o) => ({ ...o, [k]: !o[k] }));
 
@@ -42,7 +45,6 @@ export default function Calendar({ data, open, placeActivation }) {
     return m;
   }, [series]);
 
-  /* everything that belongs on the grid this year */
   const acts = useMemo(
     () => (activations || []).filter((a) => forYear(a.start_date, a.end_date, year)),
     [activations, year]
@@ -53,21 +55,44 @@ export default function Calendar({ data, open, placeActivation }) {
     [calendar, year, on]
   );
 
-  const revealRef = useReveal([year, mode, on]);
-
+  const revealRef = useReveal([year, mode, month, on]);
   const today = todayISO();
+
+  function shiftMonth(delta) {
+    let m = month + delta;
+    let y = year;
+    if (m < 0) { m = 11; y -= 1; }
+    if (m > 11) { m = 0; y += 1; }
+    if (years.includes(y)) { setYear(y); setMonth(m); }
+  }
+
+  function onDrop(dayKey) {
+    if (!dragging) return;
+    const a = acts.find((x) => x.id === dragging);
+    if (!a) return;
+
+    let newEnd = null;
+    if (a.end_date && a.end_date !== a.start_date) {
+      const span = Math.round((parse(a.end_date) - parse(a.start_date)) / 86400000);
+      const t = parse(dayKey);
+      t.setDate(t.getDate() + span);
+      newEnd = iso(t.getFullYear(), t.getMonth(), t.getDate());
+    }
+    placeActivation(dragging, dayKey, newEnd);
+    setDragging(null);
+    setOverDay(null);
+  }
 
   return (
     <>
       <Masthead
-        eyebrow={`Central Yards — ${year} Activation map`}
-        title="Marketing moments and ADAM work on one calendar"
+        eyebrow={`Central Yards — ${year} activation map`}
+        title="Activations, day by day"
         lede={
           <>
-            Central Yards activations and the ADAM projects supporting them, month by month.
-            Each activation shows its dates, the projects behind it, and whether there is
-            <b> room for ADAM to pitch</b>. Holidays, school breaks and recurring dates sit
-            underneath and toggle independently.
+            Central Yards activations and the ADAM work behind them, laid out like a calendar
+            with each event on the day it happens. Holidays, school breaks and recurring dates
+            sit underneath.
           </>
         }
         count={acts.length}
@@ -76,9 +101,20 @@ export default function Calendar({ data, open, placeActivation }) {
 
       <div className="cal-wrap">
         <div className="cal-toolbar">
-          <select className="cal-select" value={year} onChange={(e) => setYear(Number(e.target.value))}>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
+          <div className="cal-nav">
+            <button className="btn btn-sm" onClick={() => shiftMonth(-1)} aria-label="Previous month">&larr;</button>
+            <span className="cal-title">{MONTH_NAMES[month]} {year}</span>
+            <button className="btn btn-sm" onClick={() => shiftMonth(1)} aria-label="Next month">&rarr;</button>
+            <button
+              className="btn btn-sm"
+              onClick={() => {
+                setMonth(now.getMonth());
+                setYear(years.includes(now.getFullYear()) ? now.getFullYear() : 2027);
+              }}
+            >
+              Today
+            </button>
+          </div>
 
           <div className="tabs" style={{ margin: 0 }}>
             {VIEWS.map((v) => (
@@ -90,9 +126,9 @@ export default function Calendar({ data, open, placeActivation }) {
 
           <span className="spacer" />
 
-          <span className="cal-count">
-            {acts.length} activation{acts.length === 1 ? '' : 's'}, {dates.length} entries
-          </span>
+          <select className="cal-select" value={year} onChange={(e) => setYear(Number(e.target.value))}>
+            {years.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
         </div>
 
         <div className="cal-layers">
@@ -106,176 +142,196 @@ export default function Calendar({ data, open, placeActivation }) {
         </div>
 
         <div ref={revealRef}>
-          {mode === 'calendar'
-            ? <YearGrid
-                year={year}
-                acts={acts}
-                dates={dates}
-                seriesById={seriesById}
-                open={open}
-                today={today}
-                typhoon={calendar?.typhoon}
-                onTyphoon={on.typhoon}
-                focus={focus}
-                setFocus={setFocus}
-                placeActivation={placeActivation}
-              />
-            : <QuarterView year={year} acts={acts} dates={dates} seriesById={seriesById} open={open} onTyphoon={on.typhoon} />}
+          {mode === 'month' ? (
+            <MonthView
+              year={year}
+              month={month}
+              acts={acts}
+              dates={dates}
+              seriesById={seriesById}
+              open={open}
+              today={today}
+              dragging={dragging}
+              overDay={overDay}
+              setDragging={setDragging}
+              setOverDay={setOverDay}
+              onDrop={onDrop}
+            />
+          ) : null}
+
+          {mode === 'year' ? (
+            <YearView
+              year={year}
+              acts={acts}
+              open={open}
+              today={today}
+              onPickMonth={(m) => { setMonth(m); setMode('month'); }}
+            />
+          ) : null}
+
+          {mode === 'quarters' ? (
+            <QuarterView year={year} acts={acts} dates={dates} seriesById={seriesById} open={open} onTyphoon={on.typhoon} />
+          ) : null}
         </div>
       </div>
 
       <p className="foot-note">
-        Holiday dates are the gazetted Hong Kong general holidays. School and festival
-        run-up periods are working windows rather than official closures and can be edited.
-        Typhoon behaviour cannot be dated in advance, so that layer states the working rules
-        instead of guessing.
+        Holiday dates are the gazetted Hong Kong general holidays. School and festival run-up
+        periods are working windows rather than official closures and can be edited. Drag an
+        activation onto a day to move it.
       </p>
     </>
   );
 }
 
-/* an item belongs to the year if any part of it falls inside */
 function forYear(start, end, year) {
   const a = String(start).slice(0, 4);
   const b = String(end || start).slice(0, 4);
   return Number(a) <= year && Number(b) >= year;
 }
 
-/* ---------- the calendar ----------
-   Two levels. The year is twelve small months; clicking a month zooms into it
-   at full width with room to read the activations. An activation can be
-   dragged onto any day, and the drop writes the new start date. */
-function YearGrid({ year, acts, dates, seriesById, open, today, typhoon, onTyphoon, focus, setFocus, placeActivation }) {
-  const [dragging, setDragging] = useState(null);
-  const [overDay, setOverDay] = useState(null);
+/* how many event lanes this cell must reserve, so tallies line up */
+function laneCount(info, actLanes) {
+  if (!info.acts.length) return 0;
+  return Math.max(...info.acts.map((a) => (actLanes[a.id] ?? 0))) + 1;
+}
 
-  const months = focus === null
-    ? Array.from({ length: 12 }, (_, m) => m)
-    : [focus];
+/* ---------- the month: a real calendar ----------
+   Every day is a cell tall enough to hold its events, and each event is drawn
+   inside the cell on the day it happens. Leading and trailing days from the
+   adjacent months are shown greyed so the grid is always whole weeks. */
+function MonthView({ year, month, acts, dates, seriesById, open, today, dragging, overDay, setDragging, setOverDay, onDrop }) {
+  const totalDays = daysInMonth(year, month);
+  const offset = weekdayMon(year, month, 1);
 
-  function onDrop(dayKey, day) {
-    if (!dragging) return;
-    const a = acts.find((x) => x.id === dragging);
-    if (!a) return;
+  const prevMonth = month === 0 ? 11 : month - 1;
+  const prevYear = month === 0 ? year - 1 : year;
+  const prevDays = daysInMonth(prevYear, prevMonth);
 
-    /* keep the duration, move the start */
-    let newEnd = null;
-    if (a.end_date && a.end_date !== a.start_date) {
-      const spanDays = Math.round((parse(a.end_date) - parse(a.start_date)) / 86400000);
-      const t = parse(dayKey);
-      t.setDate(t.getDate() + spanDays);
-      newEnd = iso(t.getFullYear(), t.getMonth(), t.getDate());
+  const cells = useMemo(() => {
+    const out = [];
+    for (let i = offset; i > 0; i -= 1) {
+      const d = prevDays - i + 1;
+      out.push({ day: d, key: iso(prevYear, prevMonth, d), outside: true });
     }
+    for (let d = 1; d <= totalDays; d += 1) {
+      out.push({ day: d, key: iso(year, month, d), outside: false });
+    }
+    const nextMonth = month === 11 ? 0 : month + 1;
+    const nextYear = month === 11 ? year + 1 : year;
+    let fill = 1;
+    while (out.length % 7 !== 0) {
+      out.push({ day: fill, key: iso(nextYear, nextMonth, fill), outside: true });
+      fill += 1;
+    }
+    return out;
+  }, [offset, totalDays, year, month, prevDays, prevMonth, prevYear]);
 
-    placeActivation(dragging, dayKey, newEnd);
-    setDragging(null);
-    setOverDay(null);
-  }
+  /* Events must hold a stable vertical lane. If a cell simply stacks whatever
+     falls on that day, a long bar drops a row whenever a holiday shares the
+     date and the span reads as separate chips instead of one bar. So every
+     activation is given a fixed lane index, and each cell renders that lane
+     whether or not the event starts there. */
+  const { byDay, actLanes } = useMemo(() => {
+    const map = {};
+    for (let d = 1; d <= totalDays; d += 1) map[d] = { acts: [], dates: [] };
+
+    const visible = acts.filter((a) => overlapsMonth(a.start_date, a.end_date, year, month));
+
+    /* lane = index in a stable order, so the same event keeps its row all month */
+    const lanes = {};
+    visible
+      .slice()
+      .sort((a, b) => {
+        const as = parse(a.start_date);
+        const bs = parse(b.start_date);
+        if (as - bs !== 0) return as - bs;
+        return String(a.title).localeCompare(String(b.title));
+      })
+      .forEach((a, i) => { lanes[a.id] = i; });
+
+    visible.forEach((a) => {
+      const s = parse(a.start_date);
+      const e = parse(a.end_date || a.start_date);
+      const first = s.getFullYear() === year && s.getMonth() === month ? s.getDate() : 1;
+      const last = e.getFullYear() === year && e.getMonth() === month ? e.getDate() : totalDays;
+      for (let d = first; d <= Math.min(last, totalDays); d += 1) {
+        if (map[d]) map[d].acts.push(a);
+      }
+    });
+
+    dates.forEach((x) => {
+      if (!overlapsMonth(x.start, x.end, year, month)) return;
+      const s = parse(x.start);
+      const e = parse(x.end || x.start);
+      const first = s.getFullYear() === year && s.getMonth() === month ? s.getDate() : 1;
+      const last = e.getFullYear() === year && e.getMonth() === month ? e.getDate() : totalDays;
+      for (let d = first; d <= Math.min(last, totalDays); d += 1) {
+        if (map[d]) map[d].dates.push(x);
+      }
+    });
+    return { byDay: map, actLanes: lanes };
+  }, [acts, dates, year, month, totalDays]);
 
   return (
-    <>
-      {focus !== null ? (
-        <div className="month-focus-bar">
-          <button className="btn btn-sm" onClick={() => setFocus(null)}>
-            All months
-          </button>
-          <div className="month-focus-nav">
-            <button
-              className="btn btn-sm"
-              onClick={() => setFocus(focus === 0 ? 11 : focus - 1)}
-              aria-label="Previous month"
-            >
-              &larr;
-            </button>
-            <span className="month-focus-name">{MONTH_NAMES[focus]} {year}</span>
-            <button
-              className="btn btn-sm"
-              onClick={() => setFocus(focus === 11 ? 0 : focus + 1)}
-              aria-label="Next month"
-            >
-              &rarr;
-            </button>
-          </div>
-          <span className="month-focus-hint">Drag an activation onto a day to move it</span>
-        </div>
-      ) : null}
-
-      <div className={'yeargrid' + (focus !== null ? ' zoomed' : '')}>
-        {months.map((m) => {
-          const inMonth = acts.filter((a) => overlapsMonth(a.start_date, a.end_date, year, m));
-          const dInMonth = dates.filter((d) => overlapsMonth(d.start, d.end, year, m));
-          const totalDays = daysInMonth(year, m);
-          const offset = weekdayMon(year, m, 1);
-
-          const byDay = {};
-          dInMonth.forEach((d) => {
-            const a = parse(d.start);
-            const b = parse(d.end || d.start);
-            const first = a.getFullYear() === year && a.getMonth() === m ? a.getDate() : 1;
-            const last = b.getFullYear() === year && b.getMonth() === m ? b.getDate() : totalDays;
-            for (let day = first; day <= Math.min(last, totalDays); day += 1) {
-              (byDay[day] = byDay[day] || []).push(d);
-            }
-          });
-
-          const typhoonHere = onTyphoon && typhoon?.season
-            && m + 1 >= typhoon.season.start_month && m + 1 <= typhoon.season.end_month;
-
+    <div className="monthview">
+      <div className="mv-weekdays">
+        {WEEKDAYS.map((w) => <span key={w}>{w}</span>)}
+      </div>
+      <div className="mv-grid">
+        {cells.map((c) => {
+          const info = c.outside ? { acts: [], dates: [] } : (byDay[c.day] || { acts: [], dates: [] });
+          const isToday = c.key === today;
+          const isOver = overDay === c.key;
           return (
-            <div key={m} className={'month reveal' + (focus !== null ? ' month-big' : '')}>
-              <div className="month-head">
-                <button
-                  className="month-name month-name-btn"
-                  onClick={() => setFocus(focus === m ? null : m)}
-                  title={focus === null ? 'Zoom into this month' : 'Back to the year'}
-                >
-                  {MONTH_NAMES[m]}
-                </button>
-                <span className="month-meta">
-                  {inMonth.length ? `${inMonth.length} activation${inMonth.length === 1 ? '' : 's'}` : ''}
-                </span>
+            <div
+              key={c.key}
+              className={
+                'mv-cell' +
+                (c.outside ? ' mv-outside' : '') +
+                (isToday ? ' mv-today' : '') +
+                (isOver ? ' mv-over' : '')
+              }
+              onDragOver={(e) => { if (!c.outside) { e.preventDefault(); setOverDay(c.key); } }}
+              onDragLeave={() => setOverDay((k) => (k === c.key ? null : k))}
+              onDrop={(e) => { if (!c.outside) { e.preventDefault(); onDrop(c.key); } }}
+            >
+              <div className="mv-daynum">{c.day}</div>
+
+              <div className={'mv-dates-strip' + (info.dates.length ? '' : ' mv-strip-empty')}>
+                {info.dates.map((x) => (
+                  <span key={x.id} className={`mv-date mv-date-${x.kind}`} title={x.note || x.title}>
+                    {x.title}
+                  </span>
+                ))}
               </div>
 
-              <div className="month-weekdays">
-                {WEEKDAYS.map((w) => <span key={w}>{w.slice(0, 1)}</span>)}
-              </div>
+              <div className="mv-items">
 
-              <div className="month-grid">
-                {Array.from({ length: offset }, (_, i) => <span key={'pad' + i} className="day pad" />)}
-                {Array.from({ length: totalDays }, (_, i) => {
-                  const day = i + 1;
-                  const key = iso(year, m, day);
-                  const marks = byDay[day] || [];
-                  const isToday = key === today;
-                  const kinds = new Set(marks.map((x) => x.kind));
+                {/* One fixed-height slot per lane, in lane order, empty ones
+                    included. Without the empty slots a holiday above the bar
+                    shortens the column and the bar steps down on that day. */}
+                {Array.from({ length: laneCount(info, actLanes) }, (_, lane) => {
+                  const a = info.acts.find((x) => (actLanes[x.id] ?? 0) === lane);
+                  if (!a) return <span key={'lane' + lane} className="mv-lane" />;
+
+                  const startKey = String(a.start_date).slice(0, 10);
+                  const endKey = String(a.end_date || a.start_date).slice(0, 10);
+                  const isStart = startKey === c.key;
+                  const isEnd = endKey === c.key;
+                  const multi = a.end_date && a.end_date !== a.start_date;
+
                   return (
-                    <span
-                      key={key}
-                      className={
-                        'day' +
-                        (marks.length ? ' marked' : '') +
-                        (kinds.has('holiday') ? ' h-holiday' : kinds.has('school') ? ' h-school' : kinds.has('cny') ? ' h-cny' : '') +
-                        (isToday ? ' today' : '') +
-                        (overDay === key ? ' over' : '') +
-                        (dragging ? ' droppable' : '')
-                      }
-                      title={marks.map((x) => x.title).join(', ')}
-                      onDragOver={(e) => { e.preventDefault(); setOverDay(key); }}
-                      onDragLeave={() => setOverDay((d) => (d === key ? null : d))}
-                      onDrop={(e) => { e.preventDefault(); onDrop(key, day); }}
-                    >
-                      {day}
-                    </span>
-                  );
-                })}
-              </div>
-
-              {inMonth.length ? (
-                <div className="month-items">
-                  {inMonth.map((a) => (
                     <button
                       key={a.id}
-                      className={`act act-${a.audience || 'joint'}` + (dragging === a.id ? ' dragging' : '')}
+                      className={
+                        'mv-act' +
+                        (a.audience === 'adam' ? ' mv-act-adam' : a.audience === 'central_yards' ? ' mv-act-cy' : ' mv-act-joint') +
+                        (multi && isStart ? ' mv-start' : '') +
+                        (multi && !isStart ? ' mv-cont' : '') +
+                        (multi && isEnd ? ' mv-end' : '') +
+                        (dragging === a.id ? ' dragging' : '')
+                      }
                       draggable
                       onDragStart={(e) => {
                         e.dataTransfer.setData('text/plain', a.id);
@@ -284,43 +340,73 @@ function YearGrid({ year, acts, dates, seriesById, open, today, typhoon, onTypho
                       }}
                       onDragEnd={() => { setDragging(null); setOverDay(null); }}
                       onClick={() => open('activation', a.id)}
+                      title={`${a.title} · ${shortDate(a.start_date)}${multi ? ' to ' + shortDate(a.end_date) : ''}${a.pitch_room ? ' · pitch room open' : ''}`}
                     >
-                      <span className="act-title">{a.title}</span>
-                      <span className="act-date">
-                        {shortDate(a.start_date)}
-                        {a.end_date && a.end_date !== a.start_date ? ` to ${shortDate(a.end_date)}` : ''}
-                        {seriesById[a.series_id] ? ` · ${seriesById[a.series_id].name}` : ''}
-                      </span>
-                      {a.pitch_room ? <span className="act-pitch">Pitch room open</span> : null}
+                      {isStart ? a.title : '\u00a0'}
                     </button>
-                  ))}
-                </div>
-              ) : null}
-
-              {typhoonHere ? (
-                <span className="holday" style={{ borderLeftColor: 'var(--art)', background: 'rgba(111,74,19,.06)', marginTop: 6 }}>
-                  Typhoon season
-                </span>
-              ) : null}
+                  );
+                })}
+              </div>
             </div>
           );
         })}
       </div>
-    </>
+    </div>
   );
 }
 
-/* ---------- the quarter view, kept as the secondary read ---------- */
+/* ---------- year: twelve mini months, a quick scan ---------- */
+function YearView({ year, acts, open, today, onPickMonth }) {
+  return (
+    <div className="yeargrid">
+      {Array.from({ length: 12 }, (_, m) => {
+        const inMonth = acts.filter((a) => overlapsMonth(a.start_date, a.end_date, year, m));
+        const totalDays = daysInMonth(year, m);
+        const offset = weekdayMon(year, m, 1);
+        return (
+          <div key={m} className="month reveal">
+            <div className="month-head">
+              <button className="month-name month-name-btn" onClick={() => onPickMonth(m)} title="Open this month">
+                {MONTH_NAMES[m]}
+              </button>
+              <span className="month-meta">{inMonth.length || ''}</span>
+            </div>
+            <div className="month-weekdays">
+              {WEEKDAYS.map((w) => <span key={w}>{w.slice(0, 1)}</span>)}
+            </div>
+            <div className="month-grid">
+              {Array.from({ length: offset }, (_, i) => <span key={'p' + i} className="day pad" />)}
+              {Array.from({ length: totalDays }, (_, i) => {
+                const day = i + 1;
+                const key = iso(year, m, day);
+                const hasAct = inMonth.some((a) => {
+                  const s = parse(a.start_date);
+                  const e = parse(a.end_date || a.start_date);
+                  const first = s.getFullYear() === year && s.getMonth() === m ? s.getDate() : 1;
+                  const last = e.getFullYear() === year && e.getMonth() === m ? e.getDate() : daysInMonth(year, m);
+                  return day >= first && day <= last;
+                });
+                return (
+                  <span key={key} className={'day' + (hasAct ? ' marked' : '') + (key === today ? ' today' : '')}>
+                    {day}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- quarters ---------- */
 function QuarterView({ year, acts, dates, seriesById, open, onTyphoon }) {
   const buckets = useMemo(() => {
     const q = [[], [], [], []];
-    acts.forEach((a) => q[qOf(a.start_date)].push(a));
-    dates.forEach((d) => q[qOf(d.start)].push({ __date: true, ...d }));
-    q.forEach((list) => list.sort((x, y) => {
-      const xs = x.__date ? x.start : x.start_date;
-      const ys = y.__date ? y.start : y.start_date;
-      return parse(xs) - parse(ys);
-    }));
+    acts.forEach((a) => q[Math.floor(parse(a.start_date).getMonth() / 3)].push(a));
+    dates.forEach((d) => q[Math.floor(parse(d.start).getMonth() / 3)].push({ __date: true, ...d }));
+    q.forEach((list) => list.sort((x, y) => parse(x.__date ? x.start : x.start_date) - parse(y.__date ? y.start : y.start_date)));
     return q;
   }, [acts, dates]);
 
@@ -330,19 +416,11 @@ function QuarterView({ year, acts, dates, seriesById, open, onTyphoon }) {
         <div key={q} className="qcol">
           <div className="qhead">{q} {year}</div>
           <div className="qbody">
-            {buckets[i].length === 0 ? (
-              <div style={{ fontSize: 10, color: 'var(--faint)', padding: '6px 2px' }}>Nothing placed</div>
-            ) : null}
+            {buckets[i].length === 0 ? <div style={{ fontSize: 10, color: 'var(--faint)', padding: '6px 2px' }}>Nothing placed</div> : null}
             {buckets[i].map((item) => {
               if (item.__date) {
-                const span = item.end && item.end !== item.start
-                  ? `${shortDate(item.start)} to ${shortDate(item.end)}`
-                  : shortDate(item.start);
-                return (
-                  <span key={item.id} className={`holday kind-${item.kind}`} title={item.note || ''}>
-                    {item.title} · {span}
-                  </span>
-                );
+                const span = item.end && item.end !== item.start ? `${shortDate(item.start)} to ${shortDate(item.end)}` : shortDate(item.start);
+                return <span key={item.id} className={`holday kind-${item.kind}`}>{item.title} · {span}</span>;
               }
               const s = seriesById[item.series_id];
               return (
@@ -358,9 +436,7 @@ function QuarterView({ year, acts, dates, seriesById, open, onTyphoon }) {
               );
             })}
             {onTyphoon && i >= 1 && i <= 3 ? (
-              <span className="holday" style={{ borderLeftColor: 'var(--art)', background: 'rgba(111,74,19,.06)' }}>
-                Typhoon season, two week buffer on outdoor builds
-              </span>
+              <span className="holday" style={{ borderLeftColor: 'var(--art)', background: 'rgba(111,74,19,.06)' }}>Typhoon season</span>
             ) : null}
           </div>
         </div>
