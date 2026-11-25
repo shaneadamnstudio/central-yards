@@ -21,7 +21,7 @@ function fmt(d) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 }
 
-export default function Tasks({ data, open }) {
+export default function Tasks({ data, open, setTaskStatus }) {
   const { tasks, projects } = data;
   const [who, setWho] = useState('everyone');
   const [showDone, setShowDone] = useState(false);
@@ -107,10 +107,21 @@ export default function Tasks({ data, open }) {
               const d = daysUntil(t.due_date);
               const late = d !== null && d < 0 && t.status !== 'done';
               return (
-                <tr key={t.id} className="reveal">
-                  <td>
-                    <div className="t-title">{t.title}</div>
-                    {t.awaiting_from ? <div className="t-sub">Awaiting {t.awaiting_from}</div> : null}
+                <tr key={t.id} className={'reveal' + (t.status === 'done' ? ' tk-done' : '')}>
+                  <td className="tk-cell">
+                    <label className="tk-wrap">
+                      <input
+                        type="checkbox"
+                        className="tk-check"
+                        checked={t.status === 'done'}
+                        onChange={(e) => setTaskStatus(t.id, e.target.checked ? 'done' : 'open')}
+                        aria-label={`Mark ${t.title} done`}
+                      />
+                      <span className="tk-main">
+                        <span className="tk-name">{t.title}</span>
+                        {t.awaiting_from ? <span className="tk-note">Awaiting {t.awaiting_from}</span> : null}
+                      </span>
+                    </label>
                   </td>
                   <td>
                     <span className={`chip ${t.owner_side === 'central_yards' ? 'chip-cy' : 'chip-adam'}`}>

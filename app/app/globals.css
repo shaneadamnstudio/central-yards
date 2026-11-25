@@ -390,6 +390,135 @@ a { color: inherit; }
   flex: 0 0 56px;
 }
 
+/* ---------- month zoom and drag ---------- */
+.month-focus-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 0 0 14px;
+}
+.month-focus-nav { display: flex; align-items: center; gap: 10px; }
+.month-focus-name {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  min-width: 132px;
+  text-align: center;
+}
+.month-focus-hint {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-left: auto;
+}
+
+.yeargrid.zoomed { grid-template-columns: 1fr; }
+.yeargrid.zoomed .month-big { min-height: 320px; padding: 16px 18px 20px; }
+.yeargrid.zoomed .month-big .month-name { font-size: 13px; }
+.yeargrid.zoomed .month-big .day {
+  font-size: 11px;
+  min-height: 30px;
+  padding: 7px 0 6px;
+}
+.yeargrid.zoomed .month-big .month-weekdays span { font-size: 9px; }
+.yeargrid.zoomed .month-big .month-items { flex-direction: row; flex-wrap: wrap; margin-top: 8px; }
+.yeargrid.zoomed .month-big .month-items .act { flex: 0 1 260px; padding: 8px 10px; }
+
+.month-name-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.month-name-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* an activation being carried. opacity and a solid outline, matching the
+   Supply Co. dragging state, so the source is visibly still in place */
+.act.dragging {
+  opacity: .45;
+  outline: 2px solid var(--black);
+  outline-offset: 1px;
+  cursor: grabbing;
+}
+.act[draggable="true"] { cursor: grab; }
+
+/* the day under the cursor while carrying something */
+.day.droppable { transition: background var(--t-fast) var(--ease-out); }
+.day.over {
+  background: var(--black);
+  color: var(--eggshell);
+  outline: 1px dashed var(--black);
+  outline-offset: 1px;
+}
+
+/* ---------- task ticks ----------
+   The checkbox recipe is copied from the Supply Co. workboard: a 14px box,
+   black fill when checked, and the tick drawn with a rotated border rather
+   than an icon so it stays crisp at any zoom. */
+.tk-cell { padding-top: 10px; }
+.tk-wrap { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.tk-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--rule-strong);
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+  border-radius: 0;
+  transition: background var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
+}
+.tk-check:hover { border-color: var(--black); }
+.tk-check:focus-visible { outline: 1px solid var(--black); outline-offset: 2px; }
+.tk-check:checked { background: var(--black); border-color: var(--black); }
+.tk-check:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border-right: 1.5px solid var(--eggshell);
+  border-bottom: 1.5px solid var(--eggshell);
+  transform: rotate(40deg);
+}
+.tk-main { min-width: 0; display: block; }
+.tk-name { font-size: 13.5px; line-height: 1.35; font-weight: 500; letter-spacing: -.012em; display: block; }
+.tk-note {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-top: 3px;
+}
+/* a done task reads as done: struck through and quiet, never removed,
+   so it can be unticked by mistake on purpose rather than by accident */
+.tk-done .tk-name { text-decoration: line-through; text-decoration-thickness: 1px; color: var(--faint); }
+.tk-done td { opacity: .62; }
+.tk-done .tk-cell { opacity: 1; }
+
+/* a failed save is stated on screen, never swallowed */
+.save-err {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--rapid);
+  border-bottom: 1px solid var(--rapid);
+  cursor: pointer;
+}
+
 /* ---------- year calendar ----------
    Twelve months, Monday first. The calendar is the primary read of the
    activation map; the quarter columns are the secondary one. */

@@ -10,6 +10,7 @@ import Social from './views/Social';
 import Finance from './views/Finance';
 import Decks from './views/Decks';
 import Drawer from './views/Drawer';
+import useWrite from './useWrite';
 
 const VIEWS = [
   { key: 'home', name: 'Overview' },
@@ -44,6 +45,7 @@ export default function Workspace({ scope }) {
   const [phase, setPhase] = useState('loading');
   const [sel, setSel] = useState(null);
   const [error, setError] = useState('');
+  const [saveError, setSaveError] = useState('');
   const [clock, setClock] = useState('');
 
   /* clock. Central Yards is in Hong Kong, so it reads Hong Kong time only. */
@@ -77,20 +79,34 @@ export default function Workspace({ scope }) {
     let dead = false;
     async function load() {
       try {
-        const [cfg, cal, seed] = await Promise.all([
+        const [cfg, cal, seed, saved] = await Promise.all([
           fetch('/config.json').then((r) => r.json()),
           fetch('/hk-calendar.json').then((r) => r.json()),
           fetch('/seed.json').then((r) => r.json()),
+          fetch('/api/state').then((r) => (r.ok ? r.json() : ({}))).catch(() => ({})),
         ]);
         if (dead) return;
+
+        /* saved writes win over the seed: a ticked task, a moved activation */
+        const taskState = saved.tasks || {};
+        const placements = saved.placements || {};
+
         setData({
           ...EMPTY,
           config: cfg,
           calendar: cal,
           projects: seed.projects || [],
           project_links: seed.project_links || [],
-          tasks: seed.tasks || [],
-          activations: seed.activations || [],
+          tasks: (seed.tasks || []).map((t) => (
+            Object.prototype.hasOwnProperty.call(taskState, t.id)
+              ? { ...t, status: taskState[t.id] || t.status }
+              : t
+          )),
+          activations: (seed.activations || []).map((a) => (
+            placements[a.id]
+              ? { ...a, start_date: placements[a.id].start_date, end_date: placements[a.id].end_date || a.end_date }
+              : a
+          )),
           activation_support: seed.activation_support || [],
           series: seed.series || [],
           ideas: seed.ideas || [],
@@ -98,6 +114,7 @@ export default function Workspace({ scope }) {
           quotes: seed.quotes || [],
           decks: seed.decks || [],
         });
+        setSaveError('');
         setPhase('ready');
       } catch (e) {
         if (dead) return;
@@ -135,6 +152,26 @@ export default function Workspace({ scope }) {
     decks: visible.decks.length,
   }), [visible]);
 
+  const { write } = useWrite(setSaveError);
+
+  /* move an activation to a day. state is the only source of truth for dates. */
+  const placeActivation = useCallback(async (id, startDate, endDate) => {
+    setData((d) => ({
+      ...d,
+      activations: d.activations.map((a) => (a.id === id ? { ...a, start_date: startDate, end_date: endDate || a.end_date } : a)),
+    }));
+    await write({ placements: { [id]: { start_date: startDate, end_date: endDate || null } } }, 'place:' + id);
+  }, [write]);
+
+  /* tick a task done, or reopen it */
+  const setTaskStatus = useCallback(async (id, status) => {
+    setData((d) => ({
+      ...d,
+      tasks: d.tasks.map((t) => (t.id === id ? { ...t, status } : t)),
+    }));
+    await write({ tasks: { [id]: status } }, 'task:' + id);
+  }, [write]);
+
   const open = useCallback((type, id) => setSel({ type, id }), []);
   const close = useCallback(() => setSel(null), []);
 
@@ -147,7 +184,7 @@ export default function Workspace({ scope }) {
   if (phase === 'loading') return <div className="boot">Loading workspace</div>;
   if (phase === 'error') return <div className="boot boot-err">{error}</div>;
 
-  const ctx = { data: visible, full: data, isAdam, counts, open, config: data.config };
+  const ctx = { data: visible, full: data, isAdam, counts, open, config: data.config, placeActivation, setTaskStatus, saveError, setSaveError };
 
   return (
     <>
@@ -169,6 +206,11 @@ export default function Workspace({ scope }) {
           ))}
         </nav>
         <div className="chrome-right">
+          {saveError ? (
+            <span className="save-err" role="alert" onClick={() => setSaveError('')}>
+              {saveError}
+            </span>
+          ) : null}
           <span className="clock">{clock}</span>
           <span>{isAdam ? 'ADAM' : 'Central Yards'}</span>
           <a className="signout" href="/auth/signout">Sign out</a>

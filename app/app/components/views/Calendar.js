@@ -25,12 +25,13 @@ function qOf(start) {
   return Math.floor(parse(start).getMonth() / 3);
 }
 
-export default function Calendar({ data, open }) {
+export default function Calendar({ data, open, placeActivation }) {
   const { activations, series, calendar } = data;
   const now = new Date();
   const years = [2026, 2027, 2028];
   const [year, setYear] = useState(years.includes(now.getFullYear() + 1) ? now.getFullYear() + 1 : 2027);
   const [mode, setMode] = useState('calendar');
+  const [focus, setFocus] = useState(null); // null = year, 0-11 = one month
   const [on, setOn] = useState({ holiday: true, school: true, cny: true, custom: true, typhoon: false });
 
   const toggle = (k) => setOn((o) => ({ ...o, [k]: !o[k] }));
@@ -105,7 +106,19 @@ export default function Calendar({ data, open }) {
 
         <div ref={revealRef}>
           {mode === 'calendar'
-            ? <YearGrid year={year} acts={acts} dates={dates} seriesById={seriesById} open={open} today={today} typhoon={calendar?.typhoon} onTyphoon={on.typhoon} />
+            ? <YearGrid
+                year={year}
+                acts={acts}
+                dates={dates}
+                seriesById={seriesById}
+                open={open}
+                today={today}
+                typhoon={calendar?.typhoon}
+                onTyphoon={on.typhoon}
+                focus={focus}
+                setFocus={setFocus}
+                placeActivation={placeActivation}
+              />
             : <QuarterView year={year} acts={acts} dates={dates} seriesById={seriesById} open={open} onTyphoon={on.typhoon} />}
         </div>
       </div>
@@ -127,100 +140,172 @@ function forYear(start, end, year) {
   return Number(a) <= year && Number(b) >= year;
 }
 
-/* ---------- the calendar: twelve months, Monday first ---------- */
-function YearGrid({ year, acts, dates, seriesById, open, today, typhoon, onTyphoon }) {
-  const months = Array.from({ length: 12 }, (_, m) => m);
+/* ---------- the calendar ----------
+   Two levels. The year is twelve small months; clicking a month zooms into it
+   at full width with room to read the activations. An activation can be
+   dragged onto any day, and the drop writes the new start date. */
+function YearGrid({ year, acts, dates, seriesById, open, today, typhoon, onTyphoon, focus, setFocus, placeActivation }) {
+  const [dragging, setDragging] = useState(null);
+  const [overDay, setOverDay] = useState(null);
+
+  const months = focus === null
+    ? Array.from({ length: 12 }, (_, m) => m)
+    : [focus];
+
+  function onDrop(dayKey, day) {
+    if (!dragging) return;
+    const a = acts.find((x) => x.id === dragging);
+    if (!a) return;
+
+    /* keep the duration, move the start */
+    let newEnd = null;
+    if (a.end_date && a.end_date !== a.start_date) {
+      const spanDays = Math.round((parse(a.end_date) - parse(a.start_date)) / 86400000);
+      const t = parse(dayKey);
+      t.setDate(t.getDate() + spanDays);
+      newEnd = iso(t.getFullYear(), t.getMonth(), t.getDate());
+    }
+
+    placeActivation(dragging, dayKey, newEnd);
+    setDragging(null);
+    setOverDay(null);
+  }
 
   return (
-    <div className="yeargrid">
-      {months.map((m) => {
-        const inMonth = acts.filter((a) => overlapsMonth(a.start_date, a.end_date, year, m));
-        const dInMonth = dates.filter((d) => overlapsMonth(d.start, d.end, year, m));
-        const totalDays = daysInMonth(year, m);
-        const offset = weekdayMon(year, m, 1);
+    <>
+      {focus !== null ? (
+        <div className="month-focus-bar">
+          <button className="btn btn-sm" onClick={() => setFocus(null)}>
+            All months
+          </button>
+          <div className="month-focus-nav">
+            <button
+              className="btn btn-sm"
+              onClick={() => setFocus(focus === 0 ? 11 : focus - 1)}
+              aria-label="Previous month"
+            >
+              &larr;
+            </button>
+            <span className="month-focus-name">{MONTH_NAMES[focus]} {year}</span>
+            <button
+              className="btn btn-sm"
+              onClick={() => setFocus(focus === 11 ? 0 : focus + 1)}
+              aria-label="Next month"
+            >
+              &rarr;
+            </button>
+          </div>
+          <span className="month-focus-hint">Drag an activation onto a day to move it</span>
+        </div>
+      ) : null}
 
-        /* per-day markers, so a holiday shows on its own square */
-        const byDay = {};
-        dInMonth.forEach((d) => {
-          const a = parse(d.start);
-          const b = parse(d.end || d.start);
-          const first = a.getFullYear() === year && a.getMonth() === m ? a.getDate() : 1;
-          const last = b.getFullYear() === year && b.getMonth() === m ? b.getDate() : totalDays;
-          for (let day = first; day <= Math.min(last, totalDays); day += 1) {
-            (byDay[day] = byDay[day] || []).push(d);
-          }
-        });
+      <div className={'yeargrid' + (focus !== null ? ' zoomed' : '')}>
+        {months.map((m) => {
+          const inMonth = acts.filter((a) => overlapsMonth(a.start_date, a.end_date, year, m));
+          const dInMonth = dates.filter((d) => overlapsMonth(d.start, d.end, year, m));
+          const totalDays = daysInMonth(year, m);
+          const offset = weekdayMon(year, m, 1);
 
-        const typhoonHere = onTyphoon && typhoon?.season && m + 1 >= typhoon.season.start_month && m + 1 <= typhoon.season.end_month;
+          const byDay = {};
+          dInMonth.forEach((d) => {
+            const a = parse(d.start);
+            const b = parse(d.end || d.start);
+            const first = a.getFullYear() === year && a.getMonth() === m ? a.getDate() : 1;
+            const last = b.getFullYear() === year && b.getMonth() === m ? b.getDate() : totalDays;
+            for (let day = first; day <= Math.min(last, totalDays); day += 1) {
+              (byDay[day] = byDay[day] || []).push(d);
+            }
+          });
 
-        return (
-          <div key={m} className="month reveal">
-            <div className="month-head">
-              <span className="month-name">{MONTH_NAMES[m]}</span>
-              <span className="month-meta">
-                {inMonth.length ? `${inMonth.length} activation${inMonth.length === 1 ? '' : 's'}` : ''}
-              </span>
-            </div>
+          const typhoonHere = onTyphoon && typhoon?.season
+            && m + 1 >= typhoon.season.start_month && m + 1 <= typhoon.season.end_month;
 
-            <div className="month-weekdays">
-              {WEEKDAYS.map((w) => <span key={w}>{w.slice(0, 1)}</span>)}
-            </div>
+          return (
+            <div key={m} className={'month reveal' + (focus !== null ? ' month-big' : '')}>
+              <div className="month-head">
+                <button
+                  className="month-name month-name-btn"
+                  onClick={() => setFocus(focus === m ? null : m)}
+                  title={focus === null ? 'Zoom into this month' : 'Back to the year'}
+                >
+                  {MONTH_NAMES[m]}
+                </button>
+                <span className="month-meta">
+                  {inMonth.length ? `${inMonth.length} activation${inMonth.length === 1 ? '' : 's'}` : ''}
+                </span>
+              </div>
 
-            <div className="month-grid">
-              {Array.from({ length: offset }, (_, i) => <span key={'pad' + i} className="day pad" />)}
-              {Array.from({ length: totalDays }, (_, i) => {
-                const day = i + 1;
-                const key = iso(year, m, day);
-                const marks = byDay[day] || [];
-                const isToday = key === today;
-                const kinds = new Set(marks.map((x) => x.kind));
-                return (
-                  <span
-                    key={key}
-                    className={
-                      'day' +
-                      (marks.length ? ' marked' : '') +
-                      (kinds.has('holiday') ? ' h-holiday' : kinds.has('school') ? ' h-school' : kinds.has('cny') ? ' h-cny' : '') +
-                      (isToday ? ' today' : '')
-                    }
-                    title={marks.map((x) => x.title).join(', ')}
-                  >
-                    {day}
-                  </span>
-                );
-              })}
-            </div>
+              <div className="month-weekdays">
+                {WEEKDAYS.map((w) => <span key={w}>{w.slice(0, 1)}</span>)}
+              </div>
 
-            {inMonth.length ? (
-              <div className="month-items">
-                {inMonth.map((a) => {
-                  const s = seriesById[a.series_id];
-                  const days = daysInMonthFor(a.start_date, a.end_date, year, m);
-                  const full = daysInMonthFor(a.start_date, a.end_date, year, m) === daysInMonthFor(a.start_date, a.end_date, year, m);
+              <div className="month-grid">
+                {Array.from({ length: offset }, (_, i) => <span key={'pad' + i} className="day pad" />)}
+                {Array.from({ length: totalDays }, (_, i) => {
+                  const day = i + 1;
+                  const key = iso(year, m, day);
+                  const marks = byDay[day] || [];
+                  const isToday = key === today;
+                  const kinds = new Set(marks.map((x) => x.kind));
                   return (
-                    <button key={a.id} className={`act act-${a.audience || 'joint'}`} onClick={() => open('activation', a.id)}>
+                    <span
+                      key={key}
+                      className={
+                        'day' +
+                        (marks.length ? ' marked' : '') +
+                        (kinds.has('holiday') ? ' h-holiday' : kinds.has('school') ? ' h-school' : kinds.has('cny') ? ' h-cny' : '') +
+                        (isToday ? ' today' : '') +
+                        (overDay === key ? ' over' : '') +
+                        (dragging ? ' droppable' : '')
+                      }
+                      title={marks.map((x) => x.title).join(', ')}
+                      onDragOver={(e) => { e.preventDefault(); setOverDay(key); }}
+                      onDragLeave={() => setOverDay((d) => (d === key ? null : d))}
+                      onDrop={(e) => { e.preventDefault(); onDrop(key, day); }}
+                    >
+                      {day}
+                    </span>
+                  );
+                })}
+              </div>
+
+              {inMonth.length ? (
+                <div className="month-items">
+                  {inMonth.map((a) => (
+                    <button
+                      key={a.id}
+                      className={`act act-${a.audience || 'joint'}` + (dragging === a.id ? ' dragging' : '')}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', a.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                        setDragging(a.id);
+                      }}
+                      onDragEnd={() => { setDragging(null); setOverDay(null); }}
+                      onClick={() => open('activation', a.id)}
+                    >
                       <span className="act-title">{a.title}</span>
                       <span className="act-date">
                         {shortDate(a.start_date)}
                         {a.end_date && a.end_date !== a.start_date ? ` to ${shortDate(a.end_date)}` : ''}
-                        {s ? ` · ${s.name}` : ''}
+                        {seriesById[a.series_id] ? ` · ${seriesById[a.series_id].name}` : ''}
                       </span>
                       {a.pitch_room ? <span className="act-pitch">Pitch room open</span> : null}
                     </button>
-                  );
-                })}
-              </div>
-            ) : null}
+                  ))}
+                </div>
+              ) : null}
 
-            {typhoonHere ? (
-              <span className="holday" style={{ borderLeftColor: 'var(--art)', background: 'rgba(111,74,19,.06)', marginTop: 6 }}>
-                Typhoon season
-              </span>
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
+              {typhoonHere ? (
+                <span className="holday" style={{ borderLeftColor: 'var(--art)', background: 'rgba(111,74,19,.06)', marginTop: 6 }}>
+                  Typhoon season
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }
 
