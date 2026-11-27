@@ -184,10 +184,69 @@ ones.
 
 ---
 
+## 13. Bring Keung Gor in as the orchestrator, with the VPS as the brain
+
+**Why:** Central Yards is not the only project running. Projects need their own
+focused agents that all draw on one shared brain, rather than one agent that
+carries every project at once and blurs them.
+
+**The shape wanted:**
+
+```
+Keung Gor (Discord or Telegram)      the orchestrator, the human-facing surface
+        |
+        v
+VPS                                  the brain: memory, skills, files, credentials
+        |
+        +-- topic: #adam-projects   agent scoped to Adam Studios
+        +-- topic: #lunacake        agent scoped to LUNA
+        +-- topic: #central-yards   agent scoped to this project
+        +-- ...
+```
+
+Each topic runs its own agent. Each is focused on one project, but all of them
+read from the same VPS brain, so a decision recorded on one project is
+available rather than lost.
+
+**Access rule, and this is the important half:** every project agent can reach
+shared storage — Google Drive, Adam Dropbox — but must not cross into another
+project's context unless explicitly asked. A LUNA question should not surface
+Central Yards files because the agent happened to see them.
+
+**Do:**
+
+1. Decide Discord or Telegram. There is already a working topic pattern on
+   Telegram: `platforms.telegram.extra.dm_topics` in `/root/.hermes/config.yaml`
+   maps a `chat_id` to named topics with `thread_id`s (ADORAS, FREELANCE, BRAIN
+   today). Extending it is far less work than a Discord migration.
+2. Create one topic per active project, and record each `thread_id`.
+3. Give each topic its own scoped context: a project note, a skills filter, and
+   a storage allow-list. `gateway.media_delivery_allow_dirs` is the existing
+   pattern for constraining paths; do the same for Drive and Dropbox roots.
+4. Write and enforce the isolation rule: a topic may read its own project's
+   material by default; reaching into another project requires the request to
+   name it explicitly.
+5. Confirm Keung Gor can reach the orchestrator from her own account, not
+   through Shane's.
+
+**Done when:** a message in the LUNA topic cannot surface Central Yards content
+unless it names Central Yards, and both topics still read the same shared
+memory for things like brand rules and voice.
+
+**Watch for:** the shared brain is the point and also the risk. Anything put in
+shared memory is visible to every project agent. Client-confidential material —
+Central Yards finances, OpenAI pitch material — belongs in the project scope,
+not the shared one.
+
+---
+
 ## Suggested order
 
 1, 2, 3 and 12 first. Task 12 is independent and can run in parallel with any of
 them. Tasks 5 and 6 can run together once 3 and 4 are done. Task 8 only after 7
 is proven working.
+
+Task 13 can start immediately: it does not depend on ClickUp or on the tracker
+sync, and the Telegram topic pattern already exists.
 
 Task 11 is a decision, not a build. Make it before handover.
