@@ -283,6 +283,57 @@ def parse_ongoing(rows):
     return projects, links
 
 
+def parse_completed(rows):
+    """Finished work. Same block shape as ongoing, but status done and lane general."""
+    projects, links = [], []
+    current = None
+    for row in rows:
+        if not row:
+            continue
+        raw = str(row[0]).strip()
+        if raw.upper().startswith("ADAM X CENTRAL") or raw.upper().startswith("PROJECTS &"):
+            continue
+        if raw:
+            lines = [l.strip() for l in raw.split("\n") if l.strip()]
+            name = lines[0] if lines else raw
+            current = name
+            pid = "sheet-" + slug(name)
+            projects.append({
+                "id": pid,
+                "name": name.title() if name.isupper() else name,
+                "summary": (lines[1] if len(lines) > 1 else "")[:400],
+                "status": "complete",
+                "lane": "general",
+                "tier": None,
+                "owner_name": "",
+                "owner_side": "adam",
+                "key_dates": [],
+                # most recent status line becomes the closing note
+                "next_action": "",
+                "next_action_due": parse_date(row[2]) if len(row) > 2 else None,
+                "visibility": "shared",
+                "source": "sheet",
+                "source_id": f"completed:{slug(name)}",
+                "position": 0,
+            })
+        if not current:
+            continue
+        url = str(row[5]).strip() if len(row) > 5 else ""
+        if url.startswith("http"):
+            kind = "folder" if "dropbox" in url else ("deck" if "figma" in url else "doc")
+            links.append({
+                "id": "lnk-c-" + slug(current) + "-" + slug(url[-24:]),
+                "project_id": "sheet-" + slug(current),
+                "kind": kind,
+                "label": f"{current.title() if current.isupper() else current} · {parse_date(row[2]) or 'deliverable'}",
+                "url": url,
+                "visibility": "shared",
+                "added_by": "sheet import",
+                "position": 0,
+            })
+    return projects, links
+
+
 def parse_social(rows):
     out = []
     current_post = None
@@ -334,11 +385,11 @@ def post(url, key, table, rows, on_conflict="id"):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--commit", action="store_true")
-    ap.add_argument("--only", choices=list(TABS), help="one tab only")
+    ap.add_argument("--only", choices=list(TABS) + ["all"], help="one tab only")
     args = ap.parse_args()
 
     token = access_token()
-    which = [args.only] if args.only else ["sow", "ongoing", "social"]
+    which = [args.only] if args.only and args.only != "all" else ["sow", "ongoing", "completed", "social"]
 
     projects, activations, links, social = [], [], [], []
 
@@ -355,6 +406,11 @@ def main():
             projects += p
             links += l
             print(f"  -> {len(p)} projects, {len(l)} links")
+        elif key == "completed":
+            p, l = parse_completed(rows)
+            projects += p
+            links += l
+            print(f"  -> {len(p)} completed projects, {len(l)} links")
         elif key == "social":
             s = parse_social(rows)
             social += s
