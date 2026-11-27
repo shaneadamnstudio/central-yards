@@ -30,12 +30,16 @@ export default function Calendar({ data, open, placeActivation }) {
   const { activations, series, calendar } = data;
   const now = new Date();
 
-  /* Only offer years the calendar layer actually covers. Listing 2026 and 2028
-     when they hold no dates produced empty months and read as a broken app. */
+  /* Offer every year the record covers, and always include next year so the
+     team can plan ahead even before anything is dated. A year with no events
+     still shows its holiday layer, so it is not a blank screen. */
   const years = useMemo(() => {
     const set = new Set();
     (calendar?.dates || []).forEach((d) => set.add(Number(String(d.start).slice(0, 4))));
     (activations || []).forEach((a) => set.add(Number(String(a.start_date).slice(0, 4))));
+    set.add(now.getFullYear());
+    set.add(now.getFullYear() + 1);
+    set.add(2028);
     const list = Array.from(set).filter((y) => Number.isFinite(y)).sort();
     return list.length ? list : [now.getFullYear()];
   }, [calendar, activations, now]);
