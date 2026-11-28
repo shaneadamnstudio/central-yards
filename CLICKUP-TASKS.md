@@ -1,5 +1,25 @@
 # ClickUp tasks: connect the tracker to the Central Yards workspace
 
+## Status, 28 November 2026
+
+Done and verified live: **1, 2, 3, 4, 5, 7, 9**.
+Partly done: **6** (projects import from the Sheet, not ClickUp), **8** (the
+Sheet data landed but the run was ad hoc; the repeatable script is `scripts/sheet_import.py`).
+Decided, not built: **11** (read-only accepted, recorded in `COWORKER-GUIDE.txt`).
+Open: **12** (rotation), **13** (topics, nothing exists on this box yet).
+**10** is fixed: the client cannot see internal rows, and the studio can.
+
+Two corrections to what follows, both proved since it was written:
+- The ClickUp token on this box works. It is the Keung Gor seat, sees both
+  spaces and the 27-list Central Yards folder. `OAUTH_027` was a wrong-shaped
+  list id, not a dead token.
+- The source list is `1600 - Central Yards Workspace` (`1100610000010928`),
+  created for this purpose. Field ids are in `CLICKUP-FIELDS.md`.
+
+---
+
+The original task list follows, kept as the record of what was asked.
+
 Ready to create. Each block is one task: a name, a description, and a rough
 estimate. Ordered so nothing is blocked by something later in the list.
 

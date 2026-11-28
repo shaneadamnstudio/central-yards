@@ -1,5 +1,12 @@
 # Access status: what the agent has and what it needs
 
+> **Superseded, 28 November 2026.** Kept as a record of what was true on 27 Nov.
+> Most of it no longer holds: the Vercel and GitHub tokens arrived, the ClickUp
+> token works, the Sheet is imported, `/api/env-check` is deleted, and the write
+> path moved server-side. Current state lives in `SETUP-RUNBOOK.md` and
+> `DECISIONS.md`.
+
+
 Updated 27 November 2026, after Shane supplied the Sheet link. Each point was
 tested against the live systems. Where my test result contradicts an earlier
 statement in this thread, the test result is what to trust.

@@ -31,6 +31,7 @@ Rapid / Standard / Big Ideas / Big Umbrella, plus links, owner and next action.
 
 To-do — filtered by Everyone, ADAM or Central Yards. Tick to mark done. Done
 items strike through but stay, so you can untick if you did it by mistake.
+Ticks are the one thing the app itself writes.
 
 Partnerships — partners and in-house ideas, linkable to a project or a moment.
 
@@ -45,10 +46,16 @@ Decks — every deck and pitch, grouped by project, current one marked.
 
 CURRENT DATA
 
-Live, but the contents are sample data — three projects, three tasks, one
-activation. Placeholders to show how it works. Real content comes from the
-ClickUp and Google Sheet tracker once connected. Do not treat anything in there
-as real yet.
+Live, and real. Projects, activations and links come from the tracker Sheet;
+tasks come from the ClickUp list "1600 - Central Yards Workspace". The sheet
+refreshes when someone runs the importer, ClickUp every 15 minutes.
+
+Two things to know:
+
+- The app is the read surface. You cannot rename a project or add a task in the
+  app. Change it in ClickUp or the Sheet, and it arrives on the next sync.
+- Ticking a task in the app does stick. If ClickUp also changes that same task,
+  the app's tick wins and the sync records the clash rather than overwriting it.
 
 
 DAY TO DAY
@@ -65,7 +72,7 @@ Code not working — make sure it is your team's code, they are different.
 Workspace unavailable — a setup problem, send Shane a screenshot.
 Upload refused — PDF, image or spreadsheet only, 10 MB max.
 Expected item missing — it may be marked internal, which hides it from the
-Central Yards view.
+Central Yards view. The ADAM code sees everything.
 
 Please keep the codes out of group chats and shared docs. If one needs to
 change, Shane can replace it in minutes.

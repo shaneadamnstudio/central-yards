@@ -36,3 +36,36 @@ Any of the three works. The service account is the cleanest for a long-lived int
 - Number of live projects, once the sheet lands.
 - Whether Keung Gor needs write access to the app itself or only to the Docs behind it.
 - Whether ADAM internal items should be invisible to the CY gate or visible-but-labelled. Currently built as invisible.
+
+---
+
+## Locked after handover, 28 November 2026
+
+This section supersedes the blockers and the open questions above. They were
+written before the credentials arrived; all of them have since been tested.
+
+1. **ClickUp is the source of truth for tasks, and nothing writes back to it.**
+   The import is one-way. The only exception is a task set created in ClickUp
+   because Carol asked for it; the app never pushes edits into ClickUp.
+2. **The Sheet owns projects, activations, links and social ideas. ClickUp owns
+   tasks. Neither importer writes the other's tables.** The precedence rule is
+   recorded in `scripts/sheet_import.py`.
+3. **A status set in the app beats a status change in ClickUp.** Both sides can
+   move it, so the importer keeps a base (`tasks.source_status`) and merges three
+   ways. When both moved, the app wins and the clash is logged, because the
+   person who ticked it saw the current value. Everything else on a task is
+   import-owned and overwritten every run.
+4. **The app is read-only for content.** Projects, ideas, quotes and decks are
+   edited in the trackers, not in the browser. Two shared codes mean there is no
+   per-person identity to attribute an edit to, so an edit form would log every
+   change against one seat. Task ticks, calendar drags and receipt uploads are
+   the three write paths.
+5. **Internal rows are visible to the ADAM code and invisible to Central Yards.**
+   Enforced twice: filtered in `lib/workspace.js` by the scope the middleware
+   reads from the signed cookie, and again in `Workspace.js` before render.
+6. **The public key is read-only.** Every write goes through the server with the
+   service key, and `lib/store.js` checks the row's visibility per call. `anon`
+   holds SELECT and nothing else, verified as 0 write privileges.
+7. **Telegram, not Discord, for the multi-project agent.** Telegram needs only a
+   config entry per topic on this box. Per-topic skill scoping exists only in the
+   Discord adapter, so that lever is deferred rather than lost.

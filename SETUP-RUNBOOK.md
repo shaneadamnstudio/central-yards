@@ -27,10 +27,12 @@ central-yards/
       views/                 one file per tab
         calDates.js          date helpers for the calendar
     app/api/
-      workspace/route.js     reads all tables
+      workspace/route.js     reads all tables, filtered to the caller's scope
       state/route.js         task status and activation placement writes
       receipts/route.js      lists receipts, mints signed URLs
       receipts/upload/route.js  accepts a file, stores it, writes the row
+      auth/gate/route.js     checks an access code, sets the scope cookie
+      auth/signout/route.js  clears it
     lib/
       workspace.js           Supabase reads
       store.js               Supabase writes, with read-back
@@ -42,7 +44,12 @@ central-yards/
       wordmark-path.js       the Adam wordmark path data
       fonts/Geist.ttf, GeistMono.ttf
     middleware.js            the access-code gate
-  sql/                       five files, applied in order
+  sql/                       seven files, applied in order (006 and 007 are
+                             for databases that already exist)
+  scripts/
+    clickup_import.py        ClickUp list -> tasks, with the status merge
+    sheet_import.py          tracker Sheet -> projects, links, activations, social
+    backfill_calendar.py     historical projects onto the calendar
 ```
 
 ---
@@ -97,19 +104,23 @@ grants are missing and every role will fail at runtime.
 
 ### 2.3 Tables
 
-| table | rows now | purpose |
-|---|---|---|
-| `projects` | 3 | the pipeline, with lane, tier, owner, next action |
-| `project_links` | 2 | Google Docs and working files per project |
-| `tasks` | 3 | the to-do list both teams read |
-| `activations` | 1 | marketing moments on the calendar |
-| `activation_support` | 4 | which projects support which activation |
-| `series` | 3 | Central Stories, Makers, Conversations |
-| `ideas` | 2 | partners and in-house concepts |
-| `social_ideas` | 2 | the brain dump |
-| `quotes` | 2 | quotations with reviewer and status |
-| `decks` | 2 | deck and pitch links |
-| `receipts` | 0 | filed receipts and invoices |
+| table | rows on 28 Nov 2026 | source | purpose |
+|---|---|---|---|
+| `projects` | 31 | Sheet | the pipeline, with lane, tier, owner, next action |
+| `project_links` | 34 | Sheet | Google Docs and working files per project |
+| `tasks` | 0 | ClickUp | the to-do list both teams read |
+| `activations` | 23 | Sheet | marketing moments on the calendar |
+| `activation_support` | 0 | Sheet | which projects support which activation |
+| `series` | 3 | seed | Central Stories, Makers, Conversations |
+| `ideas` | 0 | — | partners and in-house concepts |
+| `social_ideas` | 5 | Sheet | the brain dump |
+| `quotes` | 0 | — | quotations with reviewer and status |
+| `decks` | 0 | — | deck and pitch links |
+| `receipts` | 0 | app | filed receipts and invoices |
+
+The seed rows are gone except `series`, which was kept because those three names
+are the real programmes rather than placeholders. `tasks` is empty until someone
+puts work into ClickUp list 1600: the sample rows were deleted with the rest.
 
 `calendar_dates` also exists but is currently unused: the Hong Kong calendar
 lives in `app/public/hk-calendar.json`, not the database. If you move it into
@@ -214,10 +225,10 @@ preview deploys to work):
 
 ```
 NEXT_PUBLIC_SUPABASE_URL               https://<ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY   sb_publishable_...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY   sb_publishable_...   (legacy: no longer read by the app)
 SUPABASE_SERVICE_ROLE_KEY              eyJ...            (server only, never NEXT_PUBLIC_)
 GATE_SECRET                            any long random string
-GATE_DAYS                              30
+GATE_DAYS                              30    (optional, the code defaults to 30)
 GATE_CODES                             adam:<salt>:<hash>,cy:<salt>:<hash>
 ```
 
@@ -228,10 +239,13 @@ Two traps, both of which cost time on the first build:
 2. **Do not prefix the service key with `NEXT_PUBLIC_`.** That would inline a
    full-access key into the browser bundle.
 
-`/api/env-check` reports which expected variables the running deployment can
-see, by presence and length only. It never returns a value. Use it before
-guessing between a typo, a wrong scope and a stale build. Remove the route
-before this goes anywhere public-facing.
+The publishable key is no longer read by the app: both the read and the write
+path use the service key server-side. It is kept in the environment only because
+removing it would break nothing and is not worth a deploy of its own.
+
+`/api/env-check` used to report which variables a deployment could see, by
+presence and length only. It has been deleted, as this section used to ask.
+
 
 ### Generating the access codes
 
@@ -274,8 +288,10 @@ already caused bugs on this project.
 **Delete the row to remove something.** A cleared column is not a removal once
 a merge ignores empty values. Absence is the state.
 
-**Never seed a value the database also owns.** `seed.json` deliberately carries
-no `status` and no `start_date`. When a value lives in both places the seed wins
+**Never seed a value the database also owns.** For the two contested columns,
+`seed.json` deliberately carries no `status` on tasks and no `start_date`.
+(It does still carry `status` for projects, ideas, social ideas and quotes,
+where nothing else writes it.) When a value lives in both places the seed wins
 the merge and removal becomes impossible. For the same reason there is no
 fallback to `seed.json` when tables are missing: the app names the missing table
 and fails.
@@ -298,14 +314,20 @@ element exists. It does not prove a person can see it. Check the screenshot.
 
 ## 6. Known gaps
 
-- **No editing in the browser.** Projects, ideas, quotes and decks are read-only
-  in the UI. Content is changed in Supabase or via the tracker sync. Only task
-  status, activation placement and receipt uploads write from the page.
-- **ClickUp and Google Sheets are not connected.** Tasks and projects are
-  currently sample data. The intended shape is described in `HANDOVER.md`:
-  both importers write into `tasks` and `projects`, and the app reads those
-  tables rather than calling either API live, so a rotated token cannot blank
-  the site.
+- **No editing in the browser, by decision.** Projects, ideas, quotes and decks
+  are read-only in the UI. Content changes in ClickUp or the Sheet. Two shared
+  codes mean there is no per-person identity, so an edit form would attribute
+  every change to one seat. Task status, activation placement and receipt
+  uploads are the three write paths.
+- **ClickUp and the Sheet are connected, one way.** `scripts/sheet_import.py`
+  owns projects, links, activations and social ideas; `scripts/clickup_import.py`
+  owns tasks and runs on cron every 15 minutes from `/root/central-yards`. Neither
+  writes the other's tables and neither writes back to the tracker. Precedence
+  for the one contested column, `tasks.status`, is recorded in `DECISIONS.md`.
+- **The Sheet import is not on cron.** It was written as a one-shot run and is
+  still re-run by hand. That is the main remaining gap.
+- **The 2027 calendar is the only year with data.** `hk-calendar.json` holds 24
+  dates, all 2027. 2028 is absent because gov.hk has not gazetted it.
 - **2028 holidays are absent.** gov.hk has not gazetted them; the 2028 page
   returns 404. Add dates to `hk-calendar.json` when published and the year
   appears automatically, because the calendar derives its year range from the
