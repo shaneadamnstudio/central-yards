@@ -21,8 +21,11 @@ export default function Projects({ data, config, open, isAdam }) {
     { key: 'special', name: 'Special Projects', sub: 'Standalone initiatives leading into 2027' },
   ];
 
+  /* a confirmed tier is Carol's; until she sets one, the importer's suggestion
+     drives the colour so the board is not a single tone */
+  const tierOf = (p) => p.tier || p.tier_suggested || null;
   const shown = useMemo(
-    () => (tier === 'all' ? projects : projects.filter((p) => p.tier === tier)),
+    () => (tier === 'all' ? projects : projects.filter((p) => tierOf(p) === tier)),
     [projects, tier]
   );
 
@@ -34,7 +37,7 @@ export default function Projects({ data, config, open, isAdam }) {
       {Object.entries(TIER).map(([k, v]) => (
         <button key={k} className={tier === k ? 'on' : ''} onClick={() => setTier(k)}>
           {v.name}
-          <em>{projects.filter((p) => p.tier === k).length}</em>
+          <em>{projects.filter((p) => tierOf(p) === k).length}</em>
         </button>
       ))}
     </>
@@ -80,7 +83,10 @@ export default function Projects({ data, config, open, isAdam }) {
                 {inLane.map((p) => {
                   const links = project_links.filter((l) => l.project_id === p.id).length;
                   const openN = tasks.filter((t) => t.project_id === p.id && t.status !== 'done').length;
-                  const t = TIER[p.tier];
+                  const confirmed = Boolean(p.tier);
+                  const t = TIER[p.tier || p.tier_suggested];
+                  const tags = (p.tags && p.tags.length ? p.tags : p.tags_suggested) || [];
+                  const tagsConfirmed = Boolean(p.tags && p.tags.length);
                   return (
                     <button key={p.id} className="proj reveal" onClick={() => open('project', p.id)} style={{ '--accent': t?.color || 'var(--tan)' }}>
                       <div className="proj-top">
@@ -88,8 +94,21 @@ export default function Projects({ data, config, open, isAdam }) {
                         {p.visibility === 'internal' ? <span className="chip chip-internal">Internal</span> : null}
                       </div>
                       {p.summary ? <p className="proj-sum">{p.summary}</p> : null}
+                      {tags.length ? (
+                        <div className="proj-tags">
+                          {tags.map((k) => (
+                            <span
+                              key={k}
+                              className={'tagchip' + (tagsConfirmed ? '' : ' tagchip-suggested')}
+                              style={{ '--tag': `var(--tag-${k}, var(--tan))` }}
+                            >
+                              {k}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                       <div className="proj-meta">
-                        {t ? <span>{t.name}</span> : null}
+                        {t ? <span className={confirmed ? '' : 'suggested'}>{t.name}{confirmed ? '' : ' · suggested'}</span> : null}
                         {p.owner_name ? <span>{p.owner_name}</span> : null}
                         {links ? <span>{links} link{links === 1 ? '' : 's'}</span> : null}
                         {openN ? <span>{openN} open</span> : null}

@@ -81,6 +81,11 @@ export function scopeRows(table, rows, scope) {
   return rows.filter((r) => {
     if (SCOPED.has(table) && r.visibility === 'internal') return false;
     if (table === 'quotes' && r.status !== 'confirmed') return false;
+    /* The client's to-do is what they owe and what Adam owes them, not the
+       studio's own working list. A task Adam is doing internally carries
+       owner_side 'adam'; one that needs a CY decision carries 'central_yards'
+       or 'both'. */
+    if (table === 'tasks' && r.owner_side === 'adam') return false;
     return true;
   });
 }

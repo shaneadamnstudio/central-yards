@@ -15,28 +15,151 @@
         "fallback": "Geist, ui-sans-serif, system-ui",
         "note": "Diatype is licensed and cannot be redistributed. Geist is the stand-in."
       }
-    }
+    },
+    "taxonomyNote": "Tags and tiers are suggested by the importer from tracker data and confirmed by Carol. A confirmed value always wins over a suggestion."
   },
   "lanes": [
-    { "key": "general", "name": "General Central Yards Projects", "sub": "Ongoing work" },
-    { "key": "special", "name": "Special Projects", "sub": "Standalone initiatives leading into 2027" }
+    {
+      "key": "general",
+      "name": "General Central Yards Projects",
+      "sub": "Ongoing work"
+    },
+    {
+      "key": "special",
+      "name": "Special Projects",
+      "sub": "Standalone initiatives leading into 2027"
+    }
   ],
   "tiers": [
-    { "key": "rapid", "name": "Rapid", "color": "#0f7a4a", "desc": "Fast, low scope, ship in weeks" },
-    { "key": "standard", "name": "Standard", "color": "#a08967", "desc": "Normal campaign shape" },
-    { "key": "big_ideas", "name": "Big Ideas", "color": "#1a4f8a", "desc": "Concept worth building a year around" },
-    { "key": "big_umbrella", "name": "Big Umbrella", "color": "#7a1f2b", "desc": "Multiple projects under one narrative" }
+    {
+      "key": "rapid",
+      "name": "Rapid",
+      "color": "#0f7a4a",
+      "desc": "Fast, low scope, ship in weeks"
+    },
+    {
+      "key": "standard",
+      "name": "Standard",
+      "color": "#a08967",
+      "desc": "Normal campaign shape"
+    },
+    {
+      "key": "big_ideas",
+      "name": "Big Ideas",
+      "color": "#1a4f8a",
+      "desc": "Concept worth building a year around"
+    },
+    {
+      "key": "big_umbrella",
+      "name": "Big Umbrella",
+      "color": "#7a1f2b",
+      "desc": "Multiple projects under one narrative"
+    }
   ],
   "quoteStatuses": [
-    { "key": "submitted", "name": "Submitted", "color": "#a08967" },
-    { "key": "reviewed", "name": "Reviewed", "color": "#1a4f8a" },
-    { "key": "confirmed", "name": "Confirmed", "color": "#0f7a4a" },
-    { "key": "on_hold", "name": "On Hold", "color": "#7a1f2b" }
+    {
+      "key": "submitted",
+      "name": "Submitted",
+      "color": "#a08967"
+    },
+    {
+      "key": "reviewed",
+      "name": "Reviewed",
+      "color": "#1a4f8a"
+    },
+    {
+      "key": "confirmed",
+      "name": "Confirmed",
+      "color": "#0f7a4a"
+    },
+    {
+      "key": "on_hold",
+      "name": "On Hold",
+      "color": "#7a1f2b"
+    }
   ],
-  "taskStatuses": ["open", "doing", "blocked", "done"],
+  "taskStatuses": [
+    "open",
+    "doing",
+    "blocked",
+    "done"
+  ],
   "ownerSides": [
-    { "key": "adam", "name": "ADAM" },
-    { "key": "central_yards", "name": "Central Yards" },
-    { "key": "both", "name": "Both" }
+    {
+      "key": "adam",
+      "name": "ADAM"
+    },
+    {
+      "key": "central_yards",
+      "name": "Central Yards"
+    },
+    {
+      "key": "both",
+      "name": "Both"
+    }
+  ],
+  "tags": [
+    {
+      "key": "identity",
+      "name": "Identity",
+      "color": "#1a1a1a"
+    },
+    {
+      "key": "collateral",
+      "name": "Collateral",
+      "color": "#a08967"
+    },
+    {
+      "key": "type",
+      "name": "Type",
+      "color": "#1a4f8a"
+    },
+    {
+      "key": "film",
+      "name": "Film",
+      "color": "#7a1f2b"
+    },
+    {
+      "key": "series",
+      "name": "Series",
+      "color": "#0f7a4a"
+    },
+    {
+      "key": "social",
+      "name": "Social",
+      "color": "#5b4b8a"
+    },
+    {
+      "key": "event",
+      "name": "Event",
+      "color": "#b4703a"
+    },
+    {
+      "key": "deck",
+      "name": "Deck",
+      "color": "#6b6b6b"
+    },
+    {
+      "key": "environment",
+      "name": "Environment",
+      "color": "#2f6b6b"
+    }
+  ],
+  "deckStatuses": [
+    {
+      "key": "draft",
+      "name": "Draft",
+      "color": "#a08967"
+    },
+    {
+      "key": "submitted",
+      "name": "Submitted",
+      "color": "#1a4f8a"
+    },
+    {
+      "key": "final",
+      "name": "Final",
+      "color": "#0f7a4a"
+    }
   ]
 }
