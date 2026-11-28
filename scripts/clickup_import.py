@@ -120,10 +120,16 @@ def field_value(task, name):
 
 
 def owner_side_for(task):
-    """Adam staff are adam; a listed CY contact is central_yards."""
+    """Prefer the owner_side field; fall back to the assignee's domain."""
     explicit = field_value(task, "owner_side")
     if explicit:
-        return str(explicit).lower()
+        # drop_down returns the option name, or an object on some payloads
+        if isinstance(explicit, dict):
+            explicit = explicit.get("name") or (explicit.get("value") or {}).get("name")
+        if explicit:
+            val = str(explicit).strip().lower().replace(" ", "_")
+            if val in ("adam", "central_yards", "both"):
+                return val
     for a in task.get("assignees") or []:
         email = (a.get("email") or "").lower()
         if ADAM_DOMAIN in email:
@@ -157,9 +163,10 @@ def to_row(task, project_id=None):
     assignees = task.get("assignees") or []
     owner_name = ", ".join(a.get("username", "") for a in assignees if a.get("username"))
 
+    ref = field_value(task, "project_ref")
     return {
         "id": f"cu_{task['id']}",
-        "project_id": project_id,
+        "project_id": project_id or (str(ref) if ref else None),
         "title": task.get("name", "").strip(),
         "detail": "",
         "owner_name": owner_name,
@@ -168,7 +175,7 @@ def to_row(task, project_id=None):
         "status": mapped,
         "awaiting_from": "",
         "link_url": link_for(task),
-        "visibility": "shared",
+        "visibility": field_value(task, "visibility") or "shared",
         "source": "clickup",
         "source_id": task["id"],
         "position": int(task.get("orderindex") or 0) if str(task.get("orderindex", "")).isdigit() else 0,
