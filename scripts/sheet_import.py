@@ -13,6 +13,16 @@ column A blank, and each row is a dated update rather than a to-do. So:
   COMPLETED ...           -> skipped (it is history, not live work)
   SOCIAL MEDIA            -> social_ideas
 
+Field ownership across the two importers, so they cannot fight:
+
+  sheet_import.py   projects, project_links, activations, social_ideas
+  clickup_import.py tasks
+
+Neither writes the other's tables. `tasks.status` is the one column with two
+authors, ClickUp and the app, and clickup_import.py resolves that with a
+three-way merge against `tasks.source_status`. This importer never touches
+`tasks`.
+
 Two tables are stacked inside [WIP] 2027 SOW and ONGOING, each with its own
 header row. Header rows are detected by content, not by fixed index, so a
 shifted sheet does not become a task called "PROJECTS & TASKS".
