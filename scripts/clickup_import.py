@@ -454,7 +454,9 @@ def main():
         print(json.dumps({"failures": failures}, indent=1))
         die(f"{len(failures)} writes failed")
 
-    print(f"\ncommitted: {counts}. every write returned its row.")
+    done = (f"\ncommitted: {counts}. every write returned its row."
+            if counts else "\nnothing to write.")
+    print(done, file=sys.stderr if args.json else sys.stdout)
 
 
 if __name__ == "__main__":
