@@ -110,6 +110,11 @@ export default function Workspace({ scope }) {
           ...EMPTY,
           config: cfg,
           calendar: cal,
+          /* carried through to the views: the brand asset rows, the full block
+             list, and the enabled subset the navigation renders from */
+          brand_assets: seed.brand_assets || [],
+          site_blocks: seed.site_blocks || [],
+          blocks: seed.blocks || [],
           projects: seed.projects || [],
           project_links: seed.project_links || [],
           tasks: (seed.tasks || []).map((t) => ({
