@@ -1,21 +1,36 @@
 /**
  * Reads the workspace from Supabase.
  *
- * No seed fallback for the tables themselves. If the schema is missing the
- * page must say so rather than silently rendering content that the database
- * cannot save: a fallback that looks like live data is worse than an error,
- * because every write then appears to work and none of them persist.
+ * Reads with the SERVICE key, server-side only, and applies the caller's scope
+ * here. That is deliberate, and it is the reason for two things:
+ *
+ *   1. The browser key is public, so with the publishable key this function
+ *      could never see an internal row at all. The ADAM team lost its own draft
+ *      pitches, and the scope filter had nothing left to filter.
+ *   2. Filtering twice is fine. Filtering once, in the wrong layer, is what
+ *      broke it before: RLS stripped internal rows before the scope was known,
+ *      so both codes received byte-identical payloads.
+ *
+ * SUPABASE_SERVICE_ROLE_KEY must never be prefixed NEXT_PUBLIC_. It is read on
+ * the server and is not part of the browser bundle.
+ *
+ * No seed fallback for the tables themselves. If the schema is missing the page
+ * must say so rather than silently rendering content that the database cannot
+ * save: a fallback that looks like live data is worse than an error, because
+ * every write then appears to work and none of them persist.
  */
 
 import { createClient } from '@supabase/supabase-js';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 let sb;
 function db() {
   if (!URL || !KEY) {
-    throw new Error('Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.');
+    throw new Error(
+      'Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
+    );
   }
   if (!sb) {
     sb = createClient(URL, KEY, {
@@ -39,7 +54,38 @@ export const TABLES = [
   'decks',
 ];
 
-export async function loadWorkspace() {
+/* tables that carry a visibility column. activation_support does not. */
+const SCOPED = new Set([
+  'projects',
+  'project_links',
+  'tasks',
+  'activations',
+  'series',
+  'ideas',
+  'social_ideas',
+  'quotes',
+  'decks',
+]);
+
+/**
+ * The client scope, applied on top of the database.
+ *
+ *   adam  the studio. everything, including internal rows.
+ *   cy    Central Yards. shared rows only, and quotes only once confirmed.
+ *
+ * An unknown or missing scope is treated as 'cy'. Failing closed means a bug in
+ * the gate withholds draft material rather than publishing it.
+ */
+export function scopeRows(table, rows, scope) {
+  if (scope === 'adam') return rows;
+  return rows.filter((r) => {
+    if (SCOPED.has(table) && r.visibility === 'internal') return false;
+    if (table === 'quotes' && r.status !== 'confirmed') return false;
+    return true;
+  });
+}
+
+export async function loadWorkspace(scope = 'cy') {
   const client = db();
   const results = await Promise.all(TABLES.map((t) => client.from(t).select('*')));
 
@@ -52,11 +98,13 @@ export async function loadWorkspace() {
     const first = failed[0];
     throw new Error(
       `Table ${first.table} is unavailable (${first.error}). ` +
-      'Apply sql/002_live_schema.sql to the project before running the app.'
+        'Apply sql/002_live_schema.sql to the project before running the app.'
     );
   }
 
-  const out = { source: 'supabase' };
-  TABLES.forEach((t, i) => { out[t] = results[i].data || []; });
+  const out = { source: 'supabase', scope: scope === 'adam' ? 'adam' : 'cy' };
+  TABLES.forEach((t, i) => {
+    out[t] = scopeRows(t, results[i].data || [], scope);
+  });
   return out;
 }

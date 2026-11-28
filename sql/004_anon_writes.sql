@@ -12,22 +12,15 @@
 --     activations.start_date, activations.end_date
 -- Everything else stays read-only, and internal rows stay invisible.
 
--- column-level grants, not table-wide update
-grant update (status) on public.tasks to anon;
-grant update (start_date, end_date) on public.activations to anon;
-
--- RLS still gates the row. anon may only touch rows it is already allowed to see.
-drop policy if exists tasks_anon_update on public.tasks;
-create policy tasks_anon_update on public.tasks
-  for update to anon
-  using (visibility = 'shared')
-  with check (visibility = 'shared');
-
-drop policy if exists activations_anon_update on public.activations;
-create policy activations_anon_update on public.activations
-  for update to anon
-  using (visibility = 'shared')
-  with check (visibility = 'shared');
+-- SUPERSEDED ON THE WRITE PATH. Writes now go through /api/state with the
+-- service key, and lib/store.js enforces the caller's scope per row, so anon
+-- holds no UPDATE at all. See 007_write_path.sql, which removes these grants
+-- from a database that already has them.
+--
+-- The reasoning below is kept because it explains why the grants existed and
+-- what broke when they were wide: with `using (visibility = 'shared')` on the
+-- policy, an internal task was read-only to everybody, and a table-level grant
+-- from 002 overrode the column-level narrowing entirely.
 
 -- a task may only hold these states
 alter table public.tasks drop constraint if exists tasks_status_check;

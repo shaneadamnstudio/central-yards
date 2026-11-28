@@ -86,7 +86,8 @@ that runs DDL; a service-role key cannot, and neither can PostgREST.
 | 2 | `sql/003_seed.sql` | sample content, all upserts, safe to re-run |
 | 3 | `sql/004_anon_writes.sql` | column-level UPDATE for the two writable fields |
 | 4 | `sql/005_receipts.sql` | the `finance` storage bucket and `receipts` table |
-| 5 | `sql/006_anon_hardening.sql` | **existing databases only.** Revokes the old blanket grant from `anon` and restates the two writable columns. Skip on a fresh build: 002 already grants read-only. |
+| 5 | `sql/006_anon_hardening.sql` | **existing databases only.** Revokes the old blanket grant from `anon`. Skip on a fresh build: 002 already grants read-only. |
+| 6 | `sql/007_write_path.sql` | **existing databases only, and only after the deploy that moves writes server-side.** Removes anon's last two UPDATE grants. |
 
 `sql/001_schema.sql` is an earlier draft. Do not run it; 002 supersedes it.
 
@@ -122,14 +123,16 @@ gate is Next middleware, not Supabase Auth. So RLS is the only real protection.
 Current state, verified against the live project:
 
 ```
-anon          SELECT on all 12 tables, and that is all at the table level
-              UPDATE on exactly three columns:
-                tasks.status
-                activations.start_date, activations.end_date
-              no INSERT, no DELETE, no TRUNCATE anywhere
+anon          SELECT on all 12 tables. Nothing else: no INSERT, no UPDATE,
+              no DELETE, no TRUNCATE.
 authenticated full access
 service_role  full access
 ```
+
+Writes do not use the browser key. A tick and a calendar drag post to
+`/api/state`, which runs on the server with the service key and checks the
+caller's scope per row in `lib/store.js`. That is why `anon` needs no write
+grant, and why this section is shorter than it used to be.
 
 Row visibility is a separate gate, applied by RLS on top of those grants, and it
 is not uniform:
@@ -142,8 +145,11 @@ activation_support, calendar_dates, series
               no filter: USING (true) on read
 ```
 
-`anon` also cannot update a row it cannot see: the two UPDATE policies carry
-`using (visibility = 'shared')`, so an internal task is read-only in the app.
+Scope is enforced in `lib/store.js`, not by RLS, because the server writes with a
+key RLS does not filter. A Central Yards session gets `visibility = 'shared'`
+rows only, and a write against an internal row is refused with the row named.
+The read path does the same in `lib/workspace.js`, which fails closed: an unknown
+or missing scope is treated as the client's.
 
 Two things have broken this before, and both are worth checking after any SQL
 change:
@@ -159,9 +165,12 @@ change:
   holds it can empty a table with one request. Both 002 and 006 revoke it
   explicitly.
 
-`sql/004_anon_writes.sql` is the file that makes writes work. Without it every
-tick and every drag returns **HTTP 200 with zero rows affected** — it looks
-like success and changes nothing. Check it with:
+Writes used to depend on `sql/004_anon_writes.sql`, which granted anon two
+columns. That file is now superseded on the write path, and its grants are
+removed by `007_write_path.sql`. The failure mode it guarded against is still
+worth knowing: a PostgREST update with no matching grant returns **HTTP 200 with
+zero rows affected**, which looks like success and changes nothing. Every write
+in `lib/store.js` reads the row back for exactly that reason. Check it with:
 
 ```bash
 # allowed: anon holds UPDATE on tasks.status. A row that does not exist gives

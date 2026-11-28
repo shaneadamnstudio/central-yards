@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { readState, patchState } from '../../../lib/store';
+
+/** the scope the middleware put on the request, never the body */
+async function scope() {
+  return (await headers()).get('x-cy-scope') || 'cy';
+}
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -8,7 +14,7 @@ export const fetchCache = 'force-no-store';
 /** what the browser has already written, merged over the workspace on load */
 export async function GET() {
   try {
-    const state = await readState();
+    const state = await readState(await scope());
     return NextResponse.json(state);
   } catch (e) {
     return NextResponse.json({ error: String((e && e.message) || e) }, { status: 500 });
@@ -36,7 +42,7 @@ export async function POST(request) {
   }
 
   try {
-    const result = await patchState(patch);
+    const result = await patchState(patch, await scope());
     return NextResponse.json({ ok: true, backend: result.backend });
   } catch (e) {
     return NextResponse.json({ error: String((e && e.message) || e) }, { status: 500 });

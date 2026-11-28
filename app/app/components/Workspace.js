@@ -229,9 +229,10 @@ export default function Workspace({ scope }) {
                 <span className="boot-num">3</span>
                 <div>
                   <p className="boot-item-title">Add the database key</p>
-                  <p className="boot-item-body">Name <code className="kv">NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code></p>
+                  <p className="boot-item-body">Name <code className="kv">SUPABASE_SERVICE_ROLE_KEY</code></p>
                   <p className="boot-item-body">
-                    Value is the publishable key from the Supabase project (Settings &rarr; API).
+                    Value is the service role key from the Supabase project (Settings &rarr; API).
+                    Server-side only: never prefix it with NEXT_PUBLIC_.
                   </p>
                 </div>
               </div>
