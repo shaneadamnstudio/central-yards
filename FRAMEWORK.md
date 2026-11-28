@@ -47,18 +47,32 @@ That difference is why `storage_kind` is shown on the card, not hidden.
 
 ### Adding an asset
 
-Today: a row, plus a file if it is ours.
+A person files it in the app, under Brand assets, using **Add a brand asset**.
+That form is studio-only: `POST /api/assets/upload` takes a multipart form with
+`file`, `kind`, `title`, optional `subtitle`, and `visibility`, and returns 403
+to a client scope rather than hiding the button and hoping.
+
+The route:
+
+- validates kind, visibility, the 50 MB ceiling, and the mime type against the
+  bucket's allow list
+- stores at `{site_key}/{kind}/{slug}-{timestamp}.{ext}` in the private `brand`
+  bucket
+- writes the row, and **removes the uploaded object if the row cannot be
+  written**, so a failed insert does not leave an orphan file
+- reads the row back and checks the storage path matches before reporting success
+
+External links need no file: a row with `storage_kind` of `drive`, `dropbox` or
+`link` plus a `url` is enough, which is how the films and the Figma deck are
+filed today.
 
 ```sql
 insert into public.brand_assets
-  (id, kind, title, subtitle, format, storage_kind, storage_path, visibility, position)
+  (id, kind, title, subtitle, format, storage_kind, url, visibility, position)
 values
-  ('ba-example-logo', 'logo', 'Primary mark', 'SVG, light and dark', 'SVG',
-   'supabase', 'central-yards/logo-primary.svg', 'shared', 10);
+  ('ba-example-film', 'video', 'Brand film, 2026', 'Final cut, Dropbox', 'MP4',
+   'dropbox', 'https://www.dropbox.com/scl/fo/...', 'shared', 10);
 ```
-
-The upload path for the bucket is the same shape as receipts
-(`api/receipts/upload`): server-side, service key, scope checked.
 
 ---
 
@@ -143,6 +157,8 @@ Built and live on the Central Yards workspace:
 - Kit of parts with ten blocks, nine enabled and `budget` disabled, which is the
   pick-and-choose proof
 - `scripts/toggle_block.py` to change the set without a deploy
+- An upload path: studio-only form in the app, `POST /api/assets/upload`, files
+  in the private `brand` bucket, opened through a five minute signed link
 - This document
 
 Not yet supplied, and visible as empty groups rather than hidden:
