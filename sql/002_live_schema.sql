@@ -194,7 +194,16 @@ begin
     execute format('alter table public.%I enable row level security', t);
     execute format('drop policy if exists %I on public.%I', t||'_select', t);
     execute format('drop policy if exists %I on public.%I', t||'_write', t);
-    execute format('grant select, insert, update, delete on public.%I to anon, authenticated, service_role', t);
+    -- anon is the public browser key: read only at the table level. The two
+    -- writable columns are granted individually in 004; granting
+    -- insert/update/delete here would make those column grants meaningless,
+    -- because a table-level privilege overrides a column-level one.
+    execute format('grant select on public.%I to anon', t);
+    -- truncate, trigger and references arrive with Supabase's default grants
+    -- on the public schema, not from anything in this file. TRUNCATE is not
+    -- subject to RLS, so an anon key that holds it can empty a table.
+    execute format('revoke truncate, trigger, references on public.%I from anon', t);
+    execute format('grant select, insert, update, delete on public.%I to authenticated, service_role', t);
   end loop;
   grant usage on schema public to anon, authenticated, service_role;
 end $$;

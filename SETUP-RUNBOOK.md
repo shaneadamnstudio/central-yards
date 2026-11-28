@@ -86,6 +86,7 @@ that runs DDL; a service-role key cannot, and neither can PostgREST.
 | 2 | `sql/003_seed.sql` | sample content, all upserts, safe to re-run |
 | 3 | `sql/004_anon_writes.sql` | column-level UPDATE for the two writable fields |
 | 4 | `sql/005_receipts.sql` | the `finance` storage bucket and `receipts` table |
+| 5 | `sql/006_anon_hardening.sql` | **existing databases only.** Revokes the old blanket grant from `anon` and restates the two writable columns. Skip on a fresh build: 002 already grants read-only. |
 
 `sql/001_schema.sql` is an earlier draft. Do not run it; 002 supersedes it.
 
@@ -118,30 +119,70 @@ the table, delete the JSON so the same dates cannot live in two places.
 The app authenticates with the **publishable (anon) key**, because the login
 gate is Next middleware, not Supabase Auth. So RLS is the only real protection.
 
-Current policies, verified:
+Current state, verified against the live project:
 
 ```
-anon          SELECT on every table, filtered to visibility = 'shared'
-              UPDATE on tasks.status  and  activations.start_date/end_date only
-              nothing at all on receipts or the storage bucket
+anon          SELECT on all 12 tables, and that is all at the table level
+              UPDATE on exactly three columns:
+                tasks.status
+                activations.start_date, activations.end_date
+              no INSERT, no DELETE, no TRUNCATE anywhere
 authenticated full access
 service_role  full access
 ```
 
+Row visibility is a separate gate, applied by RLS on top of those grants, and it
+is not uniform:
+
+```
+projects, project_links, tasks, activations, ideas, social_ideas, decks
+              visibility = 'shared'
+quotes        visibility = 'shared' AND status = 'confirmed'
+activation_support, calendar_dates, series
+              no filter: USING (true) on read
+```
+
+`anon` also cannot update a row it cannot see: the two UPDATE policies carry
+`using (visibility = 'shared')`, so an internal task is read-only in the app.
+
+Two things have broken this before, and both are worth checking after any SQL
+change:
+
+- **A table-level grant overrides a column-level one.** 002 once granted
+  `insert, update, delete` on every table to `anon`; 004 then narrowed it to two
+  columns, and the narrowing did nothing because the table-level privilege was
+  still there. The public browser key could rewrite any column of any row it
+  could see. `006_anon_hardening.sql` fixes an existing database; 002 is fixed
+  for new ones.
+- **TRUNCATE is not subject to RLS.** It arrives with Supabase's default grants
+  on the public schema, not from anything in these files, so an `anon` key that
+  holds it can empty a table with one request. Both 002 and 006 revoke it
+  explicitly.
+
 `sql/004_anon_writes.sql` is the file that makes writes work. Without it every
 tick and every drag returns **HTTP 200 with zero rows affected** — it looks
-like success and changes nothing. This is the single most likely thing to
-re-break. Check it with:
+like success and changes nothing. Check it with:
 
 ```bash
-curl -s -w '|%{http_code}' -X PATCH "$URL/rest/v1/tasks?id=eq.t-1" \
+# allowed: anon holds UPDATE on tasks.status. A row that does not exist gives
+# 200 with []. A missing privilege gives 401 with 42501, so this distinguishes
+# "no such row" from "grant missing" even on an empty table.
+curl -s -w '|%{http_code}\n' -X PATCH "$URL/rest/v1/tasks?id=eq.none" \
   -H "apikey: $ANON" -H "Authorization: Bearer $ANON" \
   -H 'Content-Type: application/json' -H 'Prefer: return=representation' \
   -d '{"status":"done"}'
+
+# denied: a column anon may not write must answer 401 42501
+curl -s -w '|%{http_code}\n' -X PATCH "$URL/rest/v1/tasks?id=eq.none" \
+  -H "apikey: $ANON" -H "Authorization: Bearer $ANON" \
+  -H 'Content-Type: application/json' -d '{"title":"x"}'
 ```
 
-An empty array with `200` means the grant is missing, not that the row was
-already correct.
+Read those two answers together. `200 []` on the first and `401 42501` on the
+second mean the access model is intact. `200 []` on the second means the blanket
+grant is back and `006_anon_hardening.sql` needs running. Never test this with
+`id=eq.t-1`: those sample rows no longer exist, and an absent row returns the
+same empty array as a missing grant.
 
 ### 2.5 Storage
 
@@ -279,15 +320,17 @@ curl -s -o /dev/null -w "%{http_code}\n" \
   "https://<ref>.supabase.co/rest/v1/tasks?select=id&limit=1" \
   -H "apikey: $ANON"
 
-# 3. a write actually changes a row, with the app's own key
-curl -s -X PATCH "https://<ref>.supabase.co/rest/v1/tasks?id=eq.t-1" \
+# 3. a write is permitted, with the app's own key: 200 [] on a row that does not
+#    exist. A missing grant answers 401 42501 instead.
+curl -s -w '|%{http_code}\n' -X PATCH "https://<ref>.supabase.co/rest/v1/tasks?id=eq.none" \
   -H "apikey: $ANON" -H "Authorization: Bearer $ANON" \
   -H 'Content-Type: application/json' -H 'Prefer: return=representation' \
   -d '{"status":"done"}'
 
-# 4. read it back as service_role, which RLS cannot filter
-curl -s "https://<ref>.supabase.co/rest/v1/tasks?id=eq.t-1&select=status" \
-  -H "apikey: $SERVICE" -H "Authorization: Bearer $SERVICE"
+# 4. a column anon may not write is refused: expect 401 42501
+curl -s -w '|%{http_code}\n' -X PATCH "https://<ref>.supabase.co/rest/v1/tasks?id=eq.none" \
+  -H "apikey: $ANON" -H "Authorization: Bearer $ANON" \
+  -H 'Content-Type: application/json' -d '{"title":"x"}'
 ```
 
 Then in a browser: sign in with each code and confirm the Central Yards code
