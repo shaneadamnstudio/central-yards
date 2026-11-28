@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import useReveal from '../useReveal';
 import Masthead from '../Masthead';
 
@@ -42,8 +43,97 @@ function Swatch({ asset }) {
   );
 }
 
-export default function Brand({ data }) {
-  const assets = data.brand_assets || [];
+const KINDS = ['brand_book', 'colour', 'guideline', 'video', 'logo', 'other'];
+const KIND_LABEL = {
+  brand_book: 'Brand book', colour: 'Colour', guideline: 'Guideline',
+  video: 'Video or film', logo: 'Logo', other: 'Other',
+};
+
+/** Studio-only upload. The API refuses a client scope regardless of this
+    button, so hiding it is tidiness rather than the control. */
+function Uploader({ onUploaded }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState('');
+
+  async function submit(e) {
+    e.preventDefault();
+    setBusy(true); setError(''); setDone('');
+    const fd = new FormData(e.currentTarget);
+    try {
+      const r = await fetch('/api/assets/upload', { method: 'POST', body: fd });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || `Upload failed (${r.status})`);
+      setDone(`${d.asset?.title || 'File'} filed`);
+      onUploaded(d.asset);
+      e.currentTarget.reset();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <div className="ba-upload">
+        <button className="btn btn-sm" onClick={() => setOpen(true)}>Add a brand asset</button>
+        {done ? <span className="ba-ok">{done}</span> : null}
+      </div>
+    );
+  }
+
+  return (
+    <form className="ba-form" onSubmit={submit}>
+      <div className="ba-form-row">
+        <label>
+          <span>Kind</span>
+          <select name="kind" defaultValue="logo" required>
+            {KINDS.map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
+          </select>
+        </label>
+        <label className="grow">
+          <span>Title</span>
+          <input name="title" required placeholder="Primary mark" />
+        </label>
+        <label className="grow">
+          <span>Note</span>
+          <input name="subtitle" placeholder="SVG, light and dark" />
+        </label>
+        <label>
+          <span>Who sees it</span>
+          <select name="visibility" defaultValue="shared">
+            <option value="shared">Shared with the client</option>
+            <option value="internal">Internal only</option>
+          </select>
+        </label>
+      </div>
+      <div className="ba-form-row">
+        <label className="grow">
+          <span>File</span>
+          <input type="file" name="file" required />
+        </label>
+        <button className="btn btn-sm" type="submit" disabled={busy}>
+          {busy ? 'Uploading' : 'Upload'}
+        </button>
+        <button className="btn btn-sm" type="button" onClick={() => setOpen(false)} disabled={busy}>
+          Cancel
+        </button>
+      </div>
+      <p className="ba-note">
+        PDF, image, SVG, MP4, MOV, ZIP or a font. 50 MB. Files land in the private brand bucket and
+        open through a five minute signed link.
+      </p>
+      {error ? <p className="ba-err">{error}</p> : null}
+      {done ? <p className="ba-ok">{done}</p> : null}
+    </form>
+  );
+}
+
+export default function Brand({ data, isAdam }) {
+  const [added, setAdded] = useState([]);
+  const assets = [...(data.brand_assets || []), ...added];
   const revealRef = useReveal([assets.length]);
 
   const byKind = (kind) => assets
@@ -65,6 +155,8 @@ export default function Brand({ data }) {
         count={assets.length}
         countLabel="Assets"
       />
+
+      {isAdam ? <Uploader onUploaded={(a) => a && setAdded((x) => [...x, a])} /> : null}
 
       <div className="ba-wrap" ref={revealRef}>
         {GROUPS.map((g) => {
