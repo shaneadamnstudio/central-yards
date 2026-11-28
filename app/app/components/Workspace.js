@@ -9,18 +9,24 @@ import Partnerships from './views/Partnerships';
 import Social from './views/Social';
 import Finance from './views/Finance';
 import Decks from './views/Decks';
+import Brand from './views/Brand';
 import Drawer from './views/Drawer';
 import useWrite from './useWrite';
 
+/* The catalogue of blocks. Which of them a given site shows is a row in
+   site_blocks, so a launch is a config decision rather than a deploy. `block`
+   is the key the database uses; `key` is the view this renders. */
 const VIEWS = [
-  { key: 'home', name: 'Overview' },
-  { key: 'calendar', name: 'Activation map' },
-  { key: 'projects', name: 'Projects' },
-  { key: 'tasks', name: 'To-do' },
-  { key: 'partnerships', name: 'Partnerships' },
-  { key: 'social', name: 'Social' },
-  { key: 'finance', name: 'Finance' },
-  { key: 'decks', name: 'Decks' },
+  { key: 'home', block: 'overview', name: 'Overview' },
+  { key: 'brand', block: 'brand', name: 'Brand assets' },
+  { key: 'calendar', block: 'calendar', name: 'Activation map' },
+  { key: 'projects', block: 'projects', name: 'Projects' },
+  { key: 'tasks', block: 'tasks', name: 'To-do' },
+  { key: 'partnerships', block: 'partnerships', name: 'Partnerships' },
+  { key: 'social', block: 'social', name: 'Social' },
+  { key: 'decks', block: 'decks', name: 'Decks' },
+  { key: 'finance', block: 'finance', name: 'Finance' },
+  { key: 'budget', block: 'budget', name: 'Budget' },
 ];
 
 const EMPTY = {
@@ -281,7 +287,7 @@ export default function Workspace({ scope }) {
     <>
       <header className="chrome">
         <nav className="topnav" role="tablist" aria-label="Sections">
-          {VIEWS.map((v) => (
+          {VIEWS.filter((v) => !data.blocks || data.blocks.includes(v.block)).map((v) => (
             <button
               key={v.key}
               className="tn-head"
@@ -321,6 +327,17 @@ export default function Workspace({ scope }) {
         {view === 'social' && <Social {...ctx} />}
         {view === 'finance' && <Finance {...ctx} />}
         {view === 'decks' && <Decks {...ctx} />}
+        {view === 'brand' && <Brand {...ctx} />}
+        {view === 'budget' && (
+          <div className="empty">
+            <h3>Budget summary</h3>
+            <p>
+              A block from the kit of parts, switched off for this launch. It reads the live budget
+              elsewhere in the workspace, so nothing is retyped: fees committed, fees invoiced, and
+              what remains against the agreed scope.
+            </p>
+          </div>
+        )}
       </main>
 
       {sel ? <Drawer sel={sel} ctx={ctx} onClose={close} /> : null}

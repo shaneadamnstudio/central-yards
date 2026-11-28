@@ -42,6 +42,8 @@ function db() {
 }
 
 export const TABLES = [
+  'brand_assets',
+  'site_blocks',
   'projects',
   'project_links',
   'tasks',
@@ -56,6 +58,7 @@ export const TABLES = [
 
 /* tables that carry a visibility column. activation_support does not. */
 const SCOPED = new Set([
+  'brand_assets',
   'projects',
   'project_links',
   'tasks',
@@ -111,5 +114,22 @@ export async function loadWorkspace(scope = 'cy') {
   TABLES.forEach((t, i) => {
     out[t] = scopeRows(t, results[i].data || [], scope);
   });
+
+  /* an uploaded asset lives in a private bucket, so it opens through a short
+     signed URL minted here, per request. External links pass through as they
+     are: their access is governed by Drive, Dropbox or Figma, not by us. */
+  out.brand_assets = await Promise.all(
+    out.brand_assets.map(async (a) => {
+      if (a.storage_kind !== 'supabase' || !a.storage_path) return a;
+      const { data, error } = await client.storage.from('brand').createSignedUrl(a.storage_path, 300);
+      return { ...a, url: error ? '' : data?.signedUrl || '', signed: !error };
+    })
+  );
+
+  /* the kit of parts: only the blocks this site has switched on */
+  out.blocks = (out.site_blocks || [])
+    .filter((b) => b.enabled)
+    .sort((a, b) => (a.position || 0) - (b.position || 0))
+    .map((b) => b.block_key);
   return out;
 }
